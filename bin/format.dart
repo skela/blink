@@ -152,7 +152,7 @@ Never usageError(ArgParser parser, String error) {
 void printUsage(ArgParser parser, [String? error]) {
   var output = stdout;
 
-  var message = 'Idiomatically format Dart source code.';
+  var message = 'The sensible dart code formatter (NOT opinionated)';
   if (error != null) {
     message = error;
     output = stdout;
@@ -160,9 +160,9 @@ void printUsage(ArgParser parser, [String? error]) {
 
   output.write('''$message
 
-Usage:   dartfmt [options...] [files or directories...]
+Usage:   sdartfmt [options...] [files or directories...]
 
-Example: dartfmt -w .
+Example: sdartfmt -w .
          Reformats every Dart file in the current directory tree.
 
 ${parser.usage}

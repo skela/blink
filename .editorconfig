@@ -1,0 +1,24 @@
+[*]
+indent_style = tab
+
+[*.{js,ts,json}]
+indent_size = 2
+
+[*.java]
+indent_size = 4
+
+[*.swift]
+indent_size = 4
+
+[*.kt]
+indent_size = 4
+
+[*.dart]
+indent_size = 2
+
+[*.{yaml,yml}]
+indent_style = space
+indent_size = 2
+
+[*.go]
+indent_style = tab
