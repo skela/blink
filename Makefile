@@ -4,12 +4,12 @@ default: build run
 build:
 	dart compile exe bin/format.dart -o bin/sdartfmt
 
-.PHONY: run
-run:
+.PHONY: format
+format:
 	bin/sdartfmt --fix -w benchmark/testrun.dart
 
-.PHONY: arun
-arun:
+.PHONY: astyle
+astyle:
 	astyle --style=allman \
 	--indent=tab \
 	--keep-one-line-blocks \
@@ -17,7 +17,7 @@ arun:
 	benchmark/testrun.dart
 
 .PHONY: both
-both: run arun
+both: format astyle
 
 .PHONY: reset
 reset:
