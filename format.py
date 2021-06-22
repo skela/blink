@@ -33,6 +33,11 @@ def astyle():
 	os.system(cmd)
 
 def uncrustify():
+	
+	params = [		
+		"indent_with_tabs=2", # 1=indent to level only, 2=indent with tabs
+	]
+	
 	cmd = "uncrustify -h"
 	os.system(cmd)
 
