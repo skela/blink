@@ -14,6 +14,9 @@ sdartfmt: reset _format_with_sdartfmt
 .PHONY: astyle
 astyle: reset _format_with_astyle
 
+.PHONY: uncrustify
+uncrustify: reset _format_with_uncrustify
+
 .PHONY: both
 both: reset _format_with_sdartfmt _format_with_astyle
 
@@ -23,14 +26,11 @@ _format_with_sdartfmt:
 
 .PHONY: _format_with_astyle
 _format_with_astyle:
-	astyle --style=allman \
-	--indent=tab \
-	--keep-one-line-blocks \
-	--keep-one-line-statements \
-	--indent-continuation=1 \
-	--suffix=none \
-	--mode=cs \
-	benchmark/test1.dart
+	python3 format.py -m astyle
+
+.PHONY: _format_with_uncrustify
+_format_with_uncrustify:
+	python3 format.py -m uncrustify
 
 # all astyle options here:
 # http://astyle.sourceforge.net/astyle.html

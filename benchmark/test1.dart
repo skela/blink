@@ -1,7 +1,4 @@
-class Widget
-{
-
-}
+class Widget {}
 
 class SomeWidget extends Widget
 {
@@ -11,10 +8,7 @@ class SomeWidget extends Widget
 	SomeWidget({required this.title, required this.message});
 }
 
-class TestSuperClass
-{
-
-}
+class TestSuperClass {}
 
 class TestClass extends TestSuperClass
 {
@@ -27,9 +21,12 @@ class TestClass extends TestSuperClass
 
 	void ifs()
 	{
-		if (test == 0) print("test is 0");
-		else if (test == 1) print("test is 1");
-		else print("test is something else");
+		if (test == 0)
+			print("test is 0");
+		else if (test == 1)
+			print("test is 1");
+		else
+			print("test is something else");
 
 		if (test == 0)
 			print("test is 0");
@@ -54,10 +51,7 @@ class TestClass extends TestSuperClass
 
 	Widget simpleWidget1()
 	{
-		return SomeWidget(
-		           title: "Test",
-		           message: "Message"
-		       );
+		return SomeWidget(title: "Test", message: "Message");
 	}
 
 	Widget simpleWidget2()
