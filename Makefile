@@ -27,4 +27,14 @@ _format_with_astyle:
 	--indent=tab \
 	--keep-one-line-blocks \
 	--keep-one-line-statements \
+	--indent-continuation=1 \
+	--suffix=none \
+	--mode=cs \
 	benchmark/test1.dart
+
+# all astyle options here:
+# http://astyle.sourceforge.net/astyle.html
+# i dont like these, but others might
+#--add-braces  [Add braces to unbraced one line conditional statements]
+# the opposite of that is this one here, which i also dont like, but others might prefer
+# --remove-braces [Remove braces from braced one line conditional statements]

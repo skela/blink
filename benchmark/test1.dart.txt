@@ -11,7 +11,10 @@ class SomeWidget extends Widget
 	SomeWidget({required this.title, required this.message});
 }
 
-class TestSuperClass {}
+class TestSuperClass 
+{
+
+}
 
 class TestClass extends TestSuperClass 
 {
@@ -49,7 +52,15 @@ class TestClass extends TestSuperClass
 		}
 	}
 
-	Widget simpleWidget() 
+	Widget simpleWidget1() 
+	{
+		return SomeWidget(
+			title: "Test",
+			message: "Message"
+		);
+	}
+
+	Widget simpleWidget2() 
 	{
 		return SomeWidget(
 			title: "Test",
