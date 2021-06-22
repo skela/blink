@@ -6,4 +6,21 @@ build:
 
 .PHONY: run
 run:
-	bin/sdartfmt -w benchmark/testrun.dart
+	bin/sdartfmt --fix -w benchmark/testrun.dart
+
+.PHONY: arun
+arun:
+	astyle --style=allman \
+	--indent=tab \
+	--keep-one-line-blocks \
+	--keep-one-line-statements \
+	benchmark/testrun.dart
+
+.PHONY: both
+both: run arun
+
+.PHONY: reset
+reset:
+	git checkout benchmark/testrun.dart
+
+# --unpad-paren \

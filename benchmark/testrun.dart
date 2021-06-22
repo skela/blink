@@ -1,15 +1,59 @@
-
-class TestSuperClass
+class Widget
 {
 
 }
 
-class TestClass extends TestSuperClass
+class SomeWidget extends Widget 
+{
+	final String title;
+	final String message;
+
+	SomeWidget({required this.title, required this.message});
+}
+
+class TestSuperClass {}
+
+class TestClass extends TestSuperClass 
 {
 	int test = 0;
 
-	void printHello()
+	void printHello() 
 	{
 		print('hello');
+	}
+
+	void ifs() 
+	{
+		if (test == 0) print("test is 0");
+		else if (test == 1) print("test is 1");
+		else print("test is something else");
+
+		if (test == 0)
+			print("test is 0");
+		else if (test == 1)
+			print("test is 1");
+		else
+			print("test is something else");
+
+		if (test == 0) 
+		{
+			print("test is 0");
+		} 
+		else if (test == 1) 
+		{
+			print("test is 1");
+		} 
+		else 
+		{
+			print("test is something else");
+		}
+	}
+
+	Widget simpleWidget() 
+	{
+		return SomeWidget(
+			title: "Test",
+			message: "Message",
+		);
 	}
 }
