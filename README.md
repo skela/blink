@@ -1,3 +1,19 @@
+## Sensible Dart Code Formatter (WIP)
+
+Goal is to build a simple replacement to the absolutely bonkers and utter sh**e opinionated formatter for dart written by Google and friends, which unfortunatealy seems to be the only available formatter for dart that I've come across.
+
+Hopefully sdartfmt can be the replacement we all need and deserve, so you can use tabs instead of spaces in dart, Allman style braces etc.
+
+The strategy will be to look at rewriting dartfmt, and/or combine it with open source tools like asource to quickly get something working. If 
+this cannot be achieved, at the very least, perhaps somebody will come up with another way to reach the ultimate dream of a customizable code formatter for dart!
+
+
+----
+
+Pure rubbish below written by literal dictators
+
+----
+
 The dart_style package defines an automatic, opinionated formatter for Dart
 code. It replaces the whitespace in your program with what it deems to be the
 best formatting for it. Resulting code should follow the [Dart style guide][]

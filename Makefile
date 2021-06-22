@@ -22,5 +22,3 @@ both: format astyle
 .PHONY: reset
 reset:
 	git checkout benchmark/testrun.dart
-
-# --unpad-paren \
