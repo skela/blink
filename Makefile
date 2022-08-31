@@ -17,6 +17,13 @@ astyle: reset _format_with_astyle
 .PHONY: uncrustify
 uncrustify: reset _format_with_uncrustify
 
+# Codebuff can be found in git@github.com:antlr/codebuff.git
+.PHONY: codebuff
+codebuff: reset _format_with_codebuff
+
+.PHONY: blink
+blink: reset _format_with_blink
+
 .PHONY: both
 both: reset _format_with_sdartfmt _format_with_astyle
 
@@ -31,6 +38,14 @@ _format_with_astyle:
 .PHONY: _format_with_uncrustify
 _format_with_uncrustify:
 	python3 format.py -m uncrustify
+
+.PHONY: _format_with_codebuff
+_format_with_codebuff:
+	python3 format.py -m codebuff
+
+.PHONY: _format_with_blink
+_format_with_blink:
+	python3 format.py -m blink
 
 # all astyle options here:
 # http://astyle.sourceforge.net/astyle.html

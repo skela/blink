@@ -32,13 +32,17 @@ def astyle():
 	cmd = f"astyle {all} {test_file}"
 	os.system(cmd)
 
-def uncrustify():
-	
-	params = [		
-		"indent_with_tabs=2", # 1=indent to level only, 2=indent with tabs
-	]
-	
-	cmd = "uncrustify -h"
+def uncrustify():		
+	cmd = "uncrustify -c uncrustify_style.cfg -f benchmark/test1.dart -o benchmark/test1-uncrust.dart ; diff benchmark/test1.dart benchmark/test1-uncrust.dart"
+	os.system(cmd)
+
+def codebuff():
+	codebuff = "java -jar codebuff/target/codebuff-1.5.1.jar"
+	cmd = f"{codebuff}"
+	os.system(cmd)
+
+def blink():
+	cmd = "cargo run --manifest-path blink/Cargo.toml -- benchmark/test1.dart --output results"
 	os.system(cmd)
 
 if m == "astyle":
@@ -47,3 +51,7 @@ if m == "uncrustify":
 	uncrustify()
 if m == "sdartfmt":
 	sdartfmt()
+if m == "codebuff":
+	codebuff()
+if m == "blink":
+	blink()
