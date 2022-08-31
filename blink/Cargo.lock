@@ -30,6 +30,7 @@ name = "blink"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "ec4rs",
 ]
 
 [[package]]
@@ -70,6 +71,12 @@ checksum = "2850f2f5a82cbf437dd5af4d49848fbdfc27c157c3d010345776f952765261c5"
 dependencies = [
  "os_str_bytes",
 ]
+
+[[package]]
+name = "ec4rs"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "db540f6c584d6e2960617a2b550632715bbe0a50a4d79c0f682a13da100b34eb"
 
 [[package]]
 name = "hashbrown"
