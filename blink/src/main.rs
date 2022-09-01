@@ -55,6 +55,11 @@ fn format_file(config:config::Config,path:&PathBuf)
 		return
 	}
 
+	if config.verbose
+	{
+		println!("Checking `{}`...",path.display());
+	}
+
 	let res = std::fs::read_to_string(path);
 
 	match res

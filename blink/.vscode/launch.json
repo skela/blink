@@ -19,7 +19,25 @@
 					"kind": "bin"
 				}
 			},
-			"args": ["../benchmark/test1.dart","--output","../results"],
+			"args": ["../samples/","--output","../results"],
+			"cwd": "${workspaceFolder}"
+		},
+		{
+			"type": "lldb",
+			"request": "launch",
+			"name": "blink verbose",
+			"cargo": {
+				"args": [
+					"build",
+					"--bin=blink",
+					"--package=blink"
+				],
+				"filter": {
+					"name": "blink",
+					"kind": "bin"
+				}
+			},
+			"args": ["../samples/","-v","--output","../results"],
 			"cwd": "${workspaceFolder}"
 		},
 		{
