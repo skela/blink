@@ -8,7 +8,7 @@ mod formatter;
 fn main()
 {
 	let args = Arguments::parse();	
-	let config = config::load(&args.path.as_path());	
+	let config = config::load(args.verbose,args.dryrun,&args.path.as_path());
 	
 	if args.path.is_dir()
 	{
@@ -23,7 +23,7 @@ fn main()
 					{
 						Ok(entry) =>
 						{							
-							format_file(args.verbose,config,&entry.path());
+							format_file(config,&entry.path());
 						}
 						Err(err) =>
 						{
@@ -40,11 +40,11 @@ fn main()
 	}
 	else
 	{
-		format_file(args.verbose,config,&args.path)
+		format_file(config,&args.path)
 	}
 }
 
-fn format_file(verbose:bool,config:config::Config,path:&PathBuf)
+fn format_file(config:config::Config,path:&PathBuf)
 {
 	let res = std::fs::read_to_string(path);
 
@@ -52,7 +52,7 @@ fn format_file(verbose:bool,config:config::Config,path:&PathBuf)
 	{
 		Ok(content) => 
 		{
-			let formatter = formatter::Formatter { verbose:verbose, config, };
+			let formatter = formatter::Formatter { config, };
 			formatter.format(content);
 		}
 
@@ -72,6 +72,10 @@ struct Arguments
 	#[clap(short,long)]
 	/// Output more detailed extra information
 	verbose: bool,
+
+	#[clap(short='d',long="dry-run")]
+	/// Output to the terminal only, don't make any changes
+	dryrun: bool,
 
 	#[clap(parse(from_os_str))]
 	/// Path to input file

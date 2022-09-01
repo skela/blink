@@ -2,10 +2,12 @@
 use ec4rs::property::IndentStyle;
 use std::path::Path;
 
-pub(crate) fn load(path:&Path) -> Config
+pub(crate) fn load(verbose:bool,dryrun:bool,path:&Path) -> Config
 {
 	let default_config = Config
 	{
+		verbose,
+		dryrun,
 		indent_style: IndentStyle::Tabs,
 		indent_size: 2,
 		curly_bracket_next_line : true,
@@ -22,6 +24,8 @@ pub(crate) fn load(path:&Path) -> Config
 			let curly_bracket_next_line = cfg.get_raw_for_key("curly_bracket_next_line").into_str().parse::<bool>().unwrap_or(default_config.curly_bracket_next_line);
 			return Config
 			{
+				verbose,
+				dryrun,
 				indent_style,
 				indent_size,
 				curly_bracket_next_line,
@@ -40,6 +44,9 @@ pub(crate) fn load(path:&Path) -> Config
 #[derive(Debug,Copy,Clone)]
 pub(crate) struct Config
 {
+	verbose: bool,
+	dryrun: bool,
+
 	indent_style : IndentStyle,
 	indent_size : u8,
 	curly_bracket_next_line : bool

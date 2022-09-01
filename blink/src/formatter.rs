@@ -1,8 +1,7 @@
 use crate::config;
 
 pub(crate) struct Formatter
-{
-	pub(crate) verbose : bool,
+{	
 	pub(crate) config : config::Config,
 }
 
