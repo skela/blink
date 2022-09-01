@@ -37,6 +37,7 @@ pub(crate) fn load(path:&Path) -> Config
 	return default_config;
 }
 
+#[derive(Debug,Copy,Clone)]
 pub(crate) struct Config
 {
 	indent_style : IndentStyle,
