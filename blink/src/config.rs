@@ -44,7 +44,7 @@ pub(crate) fn load(verbose:bool,dryrun:bool,path:&Path) -> Config
 #[derive(Debug,Copy,Clone)]
 pub(crate) struct Config
 {
-	verbose: bool,
+	pub(crate) verbose: bool,
 	dryrun: bool,
 
 	indent_style : IndentStyle,

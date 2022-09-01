@@ -46,6 +46,15 @@ fn main()
 
 fn format_file(config:config::Config,path:&PathBuf)
 {
+	if path.extension().unwrap_or(std::ffi::OsStr::new("")) != "dart"
+	{
+		if config.verbose
+		{
+			println!("Skipping non dart file - {}",path.display());
+		}
+		return
+	}
+
 	let res = std::fs::read_to_string(path);
 
 	match res
