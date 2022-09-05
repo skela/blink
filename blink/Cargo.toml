@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 clap = { version = "3.0", features = ["derive"] }
 ec4rs = { version = "1.0.1" }
+substring = { version = "1.4.5" }

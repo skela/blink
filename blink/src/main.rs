@@ -67,7 +67,7 @@ fn format_file(config:config::Config,path:&PathBuf)
 		Ok(content) => 
 		{
 			let formatter = formatter::Formatter { config, };
-			formatter.format(content);
+			formatter.format(&path,content);
 		}
 
 		Err(error) => 
