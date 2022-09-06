@@ -10,7 +10,7 @@ pub(crate) fn load(verbose:bool,dryrun:bool,path:&Path) -> Config
 		dryrun,
 		indent_style: IndentStyle::Tabs,
 		indent_size: 2,
-		curly_bracket_next_line : true,
+		curly_brace_on_next_line : true,
 	};
 
 	let res = ec4rs::properties_of(path);
@@ -21,14 +21,14 @@ pub(crate) fn load(verbose:bool,dryrun:bool,path:&Path) -> Config
 		{
 			let indent_style : IndentStyle = cfg.get::<IndentStyle>().unwrap_or(default_config.indent_style);
 			let indent_size = cfg.get_raw_for_key("indent_size").into_str().parse::<u8>().unwrap_or(default_config.indent_size);
-			let curly_bracket_next_line = cfg.get_raw_for_key("curly_bracket_next_line").into_str().parse::<bool>().unwrap_or(default_config.curly_bracket_next_line);
+			let curly_brace_on_next_line = cfg.get_raw_for_key("curly_brace_on_next_line").into_str().parse::<bool>().unwrap_or(default_config.curly_brace_on_next_line);
 			return Config
 			{
 				verbose,
 				dryrun,
 				indent_style,
 				indent_size,
-				curly_bracket_next_line,
+				curly_brace_on_next_line,
 			};
 		}
 
@@ -49,5 +49,5 @@ pub(crate) struct Config
 
 	indent_style : IndentStyle,
 	indent_size : u8,
-	curly_bracket_next_line : bool
+	pub(crate) curly_brace_on_next_line : bool
 }

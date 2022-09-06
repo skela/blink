@@ -12,7 +12,7 @@ impl Formatter
 {
 	pub(crate) fn format(&self,path:&PathBuf,content:String) -> String
 	{
-		let mut incorrect_curly_brackets = 0;
+		let mut incorrect_curly_braces = 0;
 		let mut incorrect_indentations = 0;
 
 		let mut line_number = 0;
@@ -21,8 +21,8 @@ impl Formatter
 
 		for line in content.lines()
 		{
-			let (fline1, changed1) = self.fix_incorrect_curly_brackets(line.trim_end().to_string());
-			if changed1 { incorrect_curly_brackets += 1; }
+			let (fline1, changed1) = self.fix_incorrect_curly_braces(line.trim_end().to_string());
+			if changed1 { incorrect_curly_braces += 1; }
 			
 			let (fline2,changed2) = self.fix_incorrect_indentation(fline1);
 			if changed2 { incorrect_indentations += 1; }
@@ -34,14 +34,14 @@ impl Formatter
 		}
 
 		println!("Summary for {} (wrongs): ",path.display());
-		println!("  curlies: {} indents: {}", incorrect_curly_brackets, incorrect_indentations);
+		println!("  curlies: {} indents: {}", incorrect_curly_braces, incorrect_indentations);
 
 		return fixedContent;
 	}
 
-	fn fix_incorrect_curly_brackets(&self,line:String) -> (String,bool)
+	fn fix_incorrect_curly_braces(&self,line:String) -> (String,bool)
 	{
-		if line.ends_with("{")
+		if self.config.curly_brace_on_next_line && line.ends_with("{")
 		{
 			let line_length = line.len();
 			let rline = line.substring(0,line_length-1);
