@@ -15,7 +15,7 @@ indent_size = 4
 
 [*.dart]
 indent_size = 2
-curly_bracket_next_line = true
+curly_brace_on_next_line = true
 indent_brace_style = Allman
 
 [*.{yaml,yml}]

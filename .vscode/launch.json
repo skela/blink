@@ -19,7 +19,7 @@
 					"kind": "bin"
 				}
 			},
-			"args": ["../samples/","--output","../results"],
+			"args": ["samples/","--output","results"],
 			"cwd": "${workspaceFolder}"
 		},
 		{
@@ -37,7 +37,7 @@
 					"kind": "bin"
 				}
 			},
-			"args": ["../samples/","-v","--output","../results"],
+			"args": ["samples/","-v","--output","results"],
 			"cwd": "${workspaceFolder}"
 		},
 		{
