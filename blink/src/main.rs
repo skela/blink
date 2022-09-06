@@ -23,7 +23,7 @@ fn main()
 					{
 						Ok(entry) =>
 						{							
-							format_file(config,&entry.path());
+							format_file(config,&entry.path(),&args.output);
 						}
 						Err(err) =>
 						{
@@ -40,11 +40,11 @@ fn main()
 	}
 	else
 	{
-		format_file(config,&args.path)
+		format_file(config,&args.path,&args.output);
 	}
 }
 
-fn format_file(config:config::Config,path:&PathBuf)
+fn format_file(config:config::Config,path:&PathBuf,output_folder:&PathBuf)
 {
 	if path.extension().unwrap_or(std::ffi::OsStr::new("")) != "dart"
 	{
@@ -67,7 +67,32 @@ fn format_file(config:config::Config,path:&PathBuf)
 		Ok(content) => 
 		{
 			let formatter = formatter::Formatter { config, };
-			formatter.format(&path,content);
+			let fixed_content = formatter.format(&path,content);
+
+			let fixed_path = output_folder.join(path.file_name().unwrap());
+						
+			if config.dryrun
+			{
+
+			}
+			else
+			{
+				let wres = std::fs::write(fixed_path, fixed_content);
+
+				match wres
+				{
+					Ok(_) =>
+					{
+
+					}
+
+					Err(err) =>
+					{
+						//println!("Error: Unable to write file `{}`\nReason: {}",fixed_path.display(),err);
+						println!("Error: Unable to write file {}",err);
+					}
+				}
+			}
 		}
 
 		Err(error) => 
