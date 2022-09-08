@@ -15,20 +15,31 @@ impl Formatter
 		let mut incorrect_curly_braces = 0;
 		let mut incorrect_indentations = 0;
 
+		let forbidden_lines = self.forbidden_lines(&content);
+
 		let mut line_number = 0;
 
-		let mut fixedContent = String::from("");
+		let mut fixed_content = String::from("");
 
 		for line in content.lines()
 		{
+			if forbidden_lines.contains(&line_number)
+			{
+				fixed_content.push_str(&line);
+				fixed_content.push_str("\n");
+		
+				line_number += 1;
+				continue;
+			}
+
 			let (fline1, changed1) = self.fix_incorrect_curly_braces(line.trim_end().to_string());
 			if changed1 { incorrect_curly_braces += 1; }
 			
 			let (fline2,changed2) = self.fix_incorrect_indentation(fline1);
 			if changed2 { incorrect_indentations += 1; }
 			
-			fixedContent.push_str(&fline2);
-			fixedContent.push_str("\n");
+			fixed_content.push_str(&fline2);
+			fixed_content.push_str("\n");
 
 			line_number += 1;
 		}
@@ -36,7 +47,41 @@ impl Formatter
 		println!("Summary for {} (wrongs): ",path.display());
 		println!("  curlies: {} indents: {}", incorrect_curly_braces, incorrect_indentations);
 
-		return fixedContent;
+		return fixed_content;
+	}
+
+	fn forbidden_lines(&self,content:&String) -> Vec<i32>
+	{
+		let mut forbidden : Vec<i32> = Vec::new();
+
+		let mut line_number = 0;
+
+		let mut is_inside_dquotes = false;
+		let dquotes = "\"\"\"";
+
+		for line in content.lines()
+		{
+			if line.contains(dquotes)
+			{
+				if is_inside_dquotes
+				{
+					is_inside_dquotes = false;
+					forbidden.push(line_number);
+				}
+				else
+				{
+					is_inside_dquotes = true;
+					forbidden.push(line_number);
+				}
+			}
+			else if is_inside_dquotes
+			{
+				forbidden.push(line_number);
+			}
+			line_number += 1;
+		}
+
+		return forbidden;
 	}
 
 	fn fix_incorrect_curly_braces(&self,line:String) -> (String,bool)

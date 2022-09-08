@@ -20,6 +20,19 @@ class TestClass extends TestSuperClass
 {
 	int test = 0;
 
+	String whatever1 = 
+	"""asd
+    hi i want spaces and curlies {
+		because im a string literal,
+	 who would prefer to remain exactly the way i am
+	asd""";
+
+	String whatever2 = """asd
+    hi i want spaces and curlies {
+		because im a string literal,
+	 who would prefer to remain exactly the way i am
+	asd""";
+
 	void printHello() 
 	{
 		print('hello');
