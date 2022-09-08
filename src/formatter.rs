@@ -1,7 +1,7 @@
 use std::{path::PathBuf};
 use substring::Substring;
 
-use crate::config;
+use crate::config::{self, IndentationStyle};
 
 pub(crate) struct Formatter
 {	
@@ -113,6 +113,41 @@ impl Formatter
 
 	fn fix_incorrect_indentation(&self,line:String) -> (String,bool)
 	{
+		match self.config.indentation.style
+		{
+			IndentationStyle::Tabs => 
+			{
+				let tline = line.trim_start();
+				let dspace = "  ";
+				if tline.contains(dspace)
+				{
+					let delta = line.len() - tline.len();
+					if delta > 0
+					{
+						let mut start = String::from(line.substring(0,delta));
+						while start.contains(dspace)
+						{
+							start = start.replace(dspace,"\t");
+						}
+
+						if self.config.verbose
+						{
+							println!("Found incorrect indentation - {}",line);
+						}
+
+
+						start.push_str(tline);
+						return (start,true);
+					}
+				}
+			}
+
+			IndentationStyle::Spaces =>
+			{
+
+			}
+		}
+
 		return (line,false);
 	}
 }

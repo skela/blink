@@ -32,12 +32,12 @@ class TestClass extends TestSuperClass
 	 who would prefer to remain exactly the way i am
 	asd""";
 
-  void printHello()
+	void printHello()
   {
     print('hello');
   }
 
-  void ifs()
+	void ifs()
   {
     if (test == 0) print("test is 0");
     else if (test == 1) print("test is 1");
@@ -50,21 +50,21 @@ class TestClass extends TestSuperClass
     else
       print("test is something else");
 
-    if (test == 0)
+		if (test == 0)
     {
       print("test is 0");
     }
-    else if (test == 1)
+		else if (test == 1)
     {
       print("test is 1");
     }
-    else
+		else
     {
       print("test is something else");
     }
   }
 
-  Widget simpleWidget1()
+	Widget simpleWidget1()
   {
     return SomeWidget(
       title: "Test",
@@ -72,7 +72,7 @@ class TestClass extends TestSuperClass
     );
   }
 
-  Widget simpleWidget2()
+	Widget simpleWidget2()
   {
     return SomeWidget(
       title: "Test",
