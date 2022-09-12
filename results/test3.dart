@@ -4,10 +4,10 @@ class Widget
 
 class SomeWidget extends Widget
 {
-  final String title;
-  final String message;
+	final String title;
+	final String message;
 
-  SomeWidget({required this.title, required this.message});
+	SomeWidget({required this.title, required this.message});
 }
 
 class TestSuperClass
@@ -17,9 +17,9 @@ class TestSuperClass
 
 class TestClass extends TestSuperClass
 {
-  int test = 0;
+	int test = 0;
 
-  String whatever1 =
+	String whatever1 =
 	"""asd
     hi i want spaces and curlies {
 		because im a string literal,
@@ -33,50 +33,50 @@ class TestClass extends TestSuperClass
 	asd""";
 
 	void printHello()
-  {
-    print('hello');
-  }
+	{
+		print('hello');
+	}
 
 	void ifs()
-  {
-    if (test == 0) print("test is 0");
-    else if (test == 1) print("test is 1");
-    else print("test is something else");
-
-    if (test == 0)
-      print("test is 0");
-    else if (test == 1)
-      print("test is 1");
-    else
-      print("test is something else");
+	{
+		if (test == 0) print("test is 0");
+		else if (test == 1) print("test is 1");
+		else print("test is something else");
 
 		if (test == 0)
-    {
-      print("test is 0");
-    }
+			print("test is 0");
 		else if (test == 1)
-    {
-      print("test is 1");
-    }
+			print("test is 1");
 		else
-    {
-      print("test is something else");
-    }
-  }
+			print("test is something else");
+
+		if (test == 0)
+		{
+			print("test is 0");
+		}
+		else if (test == 1)
+		{
+			print("test is 1");
+		}
+		else
+		{
+			print("test is something else");
+		}
+	}
 
 	Widget simpleWidget1()
-  {
-    return SomeWidget(
-      title: "Test",
-      message: "Message"
-    );
-  }
+	{
+		return SomeWidget(
+			title: "Test",
+			message: "Message"
+		);
+	}
 
 	Widget simpleWidget2()
-  {
-    return SomeWidget(
-      title: "Test",
-      message: "Message",
-    );
-  }
+	{
+		return SomeWidget(
+			title: "Test",
+			message: "Message",
+		);
+	}
 }

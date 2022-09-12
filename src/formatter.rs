@@ -1,4 +1,4 @@
-use std::{path::PathBuf};
+use std::{path::PathBuf, ops::Index};
 use substring::Substring;
 
 use crate::config::{self, IndentationStyle};
@@ -35,7 +35,7 @@ impl Formatter
 			let (fline1, changed1) = self.fix_incorrect_curly_braces(line.trim_end().to_string());
 			if changed1 { incorrect_curly_braces += 1; }
 			
-			let (fline2,changed2) = self.fix_incorrect_indentation(fline1);
+			let (fline2,changed2) = self.fix_incorrect_indentation(fline1,self.config.verbose);
 			if changed2 { incorrect_indentations += 1; }
 			
 			fixed_content.push_str(&fline2);
@@ -95,15 +95,20 @@ impl Formatter
 			if is_incorrect
 			{
 				let delta = line_length - line.trim_start().len();
-				let mut s = String::from(rline.trim_end());
+				
 				if self.config.verbose
 				{
 					println!("Found incorrect curly - {}",line);
 				}
 
+				let mut s = String::from(rline.trim_end());
 				s.push_str("\n");
-				s.push_str(line.substring(0,delta));
-				s.push_str("{");
+
+				let mut s2 = String::from(line.substring(0,delta));
+				s2.push_str("{");
+
+				let (l,_) = self.fix_incorrect_indentation(s2,false);
+				s.push_str(&l);
 
 				return (s,true);
 			}
@@ -111,30 +116,33 @@ impl Formatter
 		return (line,false);
 	}
 
-	fn fix_incorrect_indentation(&self,line:String) -> (String,bool)
+	fn fix_incorrect_indentation(&self,line:String,verbose:bool) -> (String,bool)
 	{
 		match self.config.indentation.style
 		{
 			IndentationStyle::Tabs => 
 			{
 				let tline = line.trim_start();
-				let dspace = "  ";
-				if tline.contains(dspace)
-				{
-					let delta = line.len() - tline.len();
-					if delta > 0
+				
+				if tline.len() != line.len()
+				{					
+					let dspace = "  ";
+
+					let index = line.find(tline).unwrap();
+	
+					let mut start = String::from(line.substring(0,index));
+	
+					if start.contains(dspace)
 					{
-						let mut start = String::from(line.substring(0,delta));
 						while start.contains(dspace)
 						{
 							start = start.replace(dspace,"\t");
 						}
 
-						if self.config.verbose
+						if verbose
 						{
 							println!("Found incorrect indentation - {}",line);
 						}
-
 
 						start.push_str(tline);
 						return (start,true);
