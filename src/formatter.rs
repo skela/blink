@@ -1,4 +1,4 @@
-use std::{path::PathBuf, ops::Index};
+use std::path::PathBuf;
 use substring::Substring;
 
 use crate::config::{self, IndentationStyle};
