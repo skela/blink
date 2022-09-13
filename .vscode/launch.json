@@ -61,6 +61,24 @@
 		{
 			"type": "lldb",
 			"request": "launch",
+			"name": "blink overwrite",
+			"cargo": {
+				"args": [
+					"build",
+					"--bin=blink",
+					"--package=blink"
+				],
+				"filter": {
+					"name": "blink",
+					"kind": "bin"
+				}
+			},
+			"args": ["samples/","-v"],
+			"cwd": "${workspaceFolder}"
+		},
+		{
+			"type": "lldb",
+			"request": "launch",
 			"name": "Debug unit tests in executable 'blink'",
 			"cargo": {
 				"args": [
