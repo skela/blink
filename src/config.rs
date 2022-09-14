@@ -56,11 +56,7 @@ pub(crate) fn load(verbose:bool,dryrun:bool,path:&Path) -> Config
 	match res
 	{
 		Some(cfg) =>
-		{
-			for (k,v) in cfg.iter()
-			{
-				println!("{}={}", k, v.into_str());
-			}
+		{			
 			let indent_style : IndentStyle = cfg.get::<IndentStyle>().unwrap_or(IndentStyle::Tabs);
 			let indent_size = cfg.get_raw_for_key("indent_size").into_str().parse::<usize>().unwrap_or(default_config.indentation.size);
 			let curly_brace_on_next_line = cfg.get_raw_for_key("curly_brace_on_next_line").into_str().parse::<bool>().unwrap_or(default_config.curly_brace_on_next_line);

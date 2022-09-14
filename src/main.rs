@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, io::{self, Write}};
 
 use clap::Parser;
 
@@ -8,19 +8,57 @@ mod formatter;
 fn main()
 {
 	let args = Arguments::parse();	
-	let config = config::load(args.verbose,args.dryrun,&args.path.as_path());
-	let output = &args.output;
+	let config = config::load(args.verbose,args.dry_run,&args.path.as_path());
 
-	if args.checkconfig
+	if args.check_config
 	{
 		println!("Config:");
 		println!("{}",config.display());
 		return;
 	}
 
-	if args.path.is_dir()
+	if args.standard_input
 	{
-		let res = std::fs::read_dir(&args.path);
+		format_standard_input(config);
+	}
+	else
+	{
+		format_file_or_files_in_folder(config,&args.path,args.output);
+	}
+}
+
+fn format_standard_input(config:config::Config)
+{
+	let formatter = formatter::Formatter { config, };
+	let mut buffer = String::new();
+	let stdin = io::stdin();
+	let lines = stdin.lines();
+	for line_res in lines
+	{
+		match line_res
+		{
+			Ok(line) => { buffer.push_str(line.as_str()); buffer.push_str("\n"); }
+			Err(error) => { println!("Failed to read line - {}",error); }
+		}
+	}
+	
+	let result = formatter.format(buffer);
+
+	let mut stdout = io::stdout().lock();
+	let res = stdout.write_all(result.content.as_bytes());
+
+	match res
+	{
+		Ok(_) => {}
+		Err(error) => { println!("Failed write to std out - {}",error); }
+	}
+}
+
+fn format_file_or_files_in_folder(config:config::Config,path:&PathBuf,output:Option<PathBuf>)
+{
+	if path.is_dir()
+	{
+		let res = std::fs::read_dir(&path);
 		match res
 		{
 			Ok(paths) =>
@@ -42,13 +80,13 @@ fn main()
 			}
 			Err(error) =>
 			{
-				println!("Failed to list contents of folder at path `{}`\nReason: {}",args.path.display(),error);
+				println!("Failed to list contents of folder at path `{}`\nReason: {}",path.display(),error);
 			}
 		}
 	}
 	else
 	{
-		format_file(config,&args.path,output.to_owned());
+		format_file(config,&path,output.to_owned());
 	}
 }
 
@@ -128,7 +166,6 @@ fn format_file_in_folder(config:config::Config,path:&PathBuf,output_folder:&Path
 	}
 }
 
-
 #[derive(Parser)]
 #[clap(version, about, long_about = None)]
 /// A blazing fast code formatter for Dart
@@ -140,14 +177,18 @@ struct Arguments
 
 	#[clap(short='d',long="dry-run")]
 	/// Output to the terminal only, don't make any changes
-	dryrun: bool,
+	dry_run: bool,
+
+	#[clap(short='s',long="standard-input")]
+	/// Output to the terminal only, don't make any changes
+	standard_input: bool,
 
 	#[clap(short='c',long="check-config")]
 	/// Check the config, don't make any changes
-	checkconfig: bool,
+	check_config: bool,
 
 	#[clap(parse(from_os_str))]
-	/// Path to input file or folder
+	/// Path to input file or folder or working dir if using standard input
 	path: std::path::PathBuf,
 
 	#[clap(short,long,parse(from_os_str))]
