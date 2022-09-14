@@ -38,7 +38,7 @@ fn format_standard_input(config:config::Config)
 		match line_res
 		{
 			Ok(line) => { buffer.push_str(line.as_str()); buffer.push_str("\n"); }
-			Err(error) => { println!("Failed to read line - {}",error); }
+			Err(error) => { eprintln!("Failed to read line - {}",error); }
 		}
 	}
 	
@@ -50,7 +50,7 @@ fn format_standard_input(config:config::Config)
 	match res
 	{
 		Ok(_) => {}
-		Err(error) => { println!("Failed write to std out - {}",error); }
+		Err(error) => { eprintln!("Failed write to std out - {}",error); }
 	}
 }
 
