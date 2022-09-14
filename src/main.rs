@@ -11,6 +11,13 @@ fn main()
 	let config = config::load(args.verbose,args.dryrun,&args.path.as_path());
 	let output = &args.output;
 
+	if args.checkconfig
+	{
+		println!("Config:");
+		println!("{}",config.display());
+		return;
+	}
+
 	if args.path.is_dir()
 	{
 		let res = std::fs::read_dir(&args.path);
@@ -131,6 +138,10 @@ struct Arguments
 	#[clap(short='d',long="dry-run")]
 	/// Output to the terminal only, don't make any changes
 	dryrun: bool,
+
+	#[clap(short='c',long="check-config")]
+	/// Check the config, don't make any changes
+	checkconfig: bool,
 
 	#[clap(parse(from_os_str))]
 	/// Path to input file or folder
