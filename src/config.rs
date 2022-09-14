@@ -4,14 +4,6 @@ use std::{path::Path, fmt};
 
 pub(crate) fn load(verbose:bool,dryrun:bool,path:&Path) -> Config
 {
-	let default_config = Config
-	{
-		verbose,
-		dryrun,
-		indentation:Indentation { style:IndentationStyle::Tabs,size:2 },
-		curly_brace_on_next_line : true,
-	};
-	
 	fn load_properties_at_file_path(file_path:&Path) -> Option<ec4rs::Properties>
 	{
 		let res = ec4rs::properties_of(file_path);
@@ -51,6 +43,14 @@ pub(crate) fn load(verbose:bool,dryrun:bool,path:&Path) -> Config
 		}
 	}
 
+	let default_config = Config
+	{
+		verbose,
+		dryrun,
+		indentation:Indentation { style:IndentationStyle::Tabs,size:2 },
+		curly_brace_on_next_line : true,
+	};
+
 	let res = load_properties(path);
 
 	match res
@@ -85,8 +85,8 @@ fn load_indentation(style:IndentStyle,size:usize) -> Indentation
 {
 	match style
 	{
-		IndentStyle::Tabs => { return Indentation {style:IndentationStyle::Tabs,size:size}; }
-		IndentStyle::Spaces => { return Indentation {style:IndentationStyle::Spaces,size:size}; }
+		IndentStyle::Tabs => { return Indentation {style:IndentationStyle::Tabs,size}; }
+		IndentStyle::Spaces => { return Indentation {style:IndentationStyle::Spaces,size}; }
 	}	
 }
 

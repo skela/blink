@@ -1,4 +1,3 @@
-use std::path::PathBuf;
 use substring::Substring;
 
 use crate::config::{self, IndentationStyle};
@@ -8,9 +7,16 @@ pub(crate) struct Formatter
 	pub(crate) config : config::Config,
 }
 
+pub(crate) struct FormatterResult
+{	
+	pub(crate) content : String,
+	pub(crate) incorrect_curly_braces : i32,
+	pub(crate) incorrect_indentations : i32,
+}
+
 impl Formatter
 {
-	pub(crate) fn format(&self,path:&PathBuf,content:String) -> String
+	pub(crate) fn format(&self,content:String) -> FormatterResult
 	{
 		let mut incorrect_curly_braces = 0;
 		let mut incorrect_indentations = 0;
@@ -44,10 +50,7 @@ impl Formatter
 			line_number += 1;
 		}
 
-		println!("Summary for {} (wrongs): ",path.display());
-		println!("  curlies: {} indents: {}", incorrect_curly_braces, incorrect_indentations);
-
-		return fixed_content;
+		return FormatterResult { content:fixed_content,incorrect_curly_braces,incorrect_indentations };
 	}
 
 	fn forbidden_lines(&self,content:&String) -> Vec<i32>
@@ -152,7 +155,7 @@ impl Formatter
 
 			IndentationStyle::Spaces =>
 			{
-
+				
 			}
 		}
 

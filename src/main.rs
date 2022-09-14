@@ -90,17 +90,20 @@ fn format_file_in_folder(config:config::Config,path:&PathBuf,output_folder:&Path
 		Ok(content) => 
 		{
 			let formatter = formatter::Formatter { config, };
-			let fixed_content = formatter.format(&path,content);
+			let result = formatter.format(content);
 
 			let fixed_path = output_folder.join(path.file_name().unwrap());
 						
 			if config.dryrun
 			{
-				println!("{}",fixed_content);
+				println!("{}",result.content);
+
+				println!("Stats for {} (wrongs): ",path.display());
+				println!("  curlies: {} indents: {}", result.incorrect_curly_braces, result.incorrect_indentations);
 			}
 			else
 			{
-				let wres = std::fs::write(fixed_path, fixed_content);
+				let wres = std::fs::write(fixed_path, result.content);
 
 				match wres
 				{
