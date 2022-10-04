@@ -8,3 +8,13 @@ We may not need or even want to do all the crazy things the dartfm does, but her
 * Make use of editorconfig files, most sensible projects have them defined (or should).
 * Fix up incorrectly placed curly braces (if editorconfig has curly_brace_on_next_line=true)
 * Fix up incorrect indentation (if editorconfig has indent_style = tab)
+* Fix up incorrect single quote usage (if editorconfig has prefer_double_quotes=true)
+
+Sample of .editorconfig that can be used:
+
+```
+[*.dart]
+indent_size = 2
+curly_brace_on_next_line = true
+prefer_double_quotes = true
+```
