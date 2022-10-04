@@ -35,7 +35,7 @@ class TestClass extends TestSuperClass
 
 	void printHello()
 	{
-		print('hello');
+		print("hello");
 	}
 
 	void ifs()

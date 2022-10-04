@@ -12,6 +12,7 @@ pub(crate) struct FormatterResult
 	pub(crate) content : String,
 	pub(crate) incorrect_curly_braces : i32,
 	pub(crate) incorrect_indentations : i32,
+	pub(crate) incorrect_quotes : i32,
 }
 
 impl Formatter
@@ -20,6 +21,7 @@ impl Formatter
 	{
 		let mut incorrect_curly_braces = 0;
 		let mut incorrect_indentations = 0;
+		let mut incorrect_quotes = 0;
 
 		let forbidden_lines = self.forbidden_lines(&content);
 
@@ -43,9 +45,11 @@ impl Formatter
 			
 			let (fline2,changed2) = self.fix_incorrect_indentation(fline1,self.config.verbose);
 			if changed2 { incorrect_indentations += 1; }
-					
-			
-			fixed_content.push_str(&fline2);
+
+			let (fline3, changed3) = self.fix_incorrect_quotes(fline2);
+			if changed3 { incorrect_quotes += 1; }
+
+			fixed_content.push_str(&fline3);
 			fixed_content.push_str("\n");
 	
 			line_number += 1;
@@ -53,7 +57,7 @@ impl Formatter
 
 		let cleaned_content = self.remove_repeating_empty_lines(&fixed_content);
 
-		return FormatterResult { content:cleaned_content,incorrect_curly_braces,incorrect_indentations };
+		return FormatterResult { content:cleaned_content,incorrect_curly_braces,incorrect_indentations,incorrect_quotes };
 	}
 
 	fn forbidden_lines(&self,content:&String) -> Vec<i32>
@@ -212,6 +216,33 @@ impl Formatter
 			}
 		}
 
+		return (line,false);
+	}
+	
+	fn fix_incorrect_quotes(&self,line:String) -> (String,bool)
+	{
+		if self.config.prefer_double_quotes && line.contains("'")
+		{
+			let mut number_of_singles = 0;
+			let mut number_of_doubles = 0;
+			for char in line.chars()
+			{
+				if char == '\''
+				{
+					number_of_singles += 1;
+					continue;
+				}
+				if char == '"'
+				{
+					number_of_doubles += 1;
+				}
+			}
+
+			if number_of_singles == 2 && number_of_doubles == 0
+			{
+				return (line.replace("'","\""),true);
+			}
+		}
 		return (line,false);
 	}
 }

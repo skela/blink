@@ -49,6 +49,7 @@ pub(crate) fn load(verbose:bool,dryrun:bool,path:&Path) -> Config
 		dryrun,
 		indentation:Indentation { style:IndentationStyle::Tabs,size:2 },
 		curly_brace_on_next_line : true,
+		prefer_double_quotes : true,
 	};
 
 	let res = load_properties(path);
@@ -60,6 +61,7 @@ pub(crate) fn load(verbose:bool,dryrun:bool,path:&Path) -> Config
 			let indent_style : IndentStyle = cfg.get::<IndentStyle>().unwrap_or(IndentStyle::Tabs);
 			let indent_size = cfg.get_raw_for_key("indent_size").into_str().parse::<usize>().unwrap_or(default_config.indentation.size);
 			let curly_brace_on_next_line = cfg.get_raw_for_key("curly_brace_on_next_line").into_str().parse::<bool>().unwrap_or(default_config.curly_brace_on_next_line);
+			let prefer_double_quotes = cfg.get_raw_for_key("prefer_double_quotes").into_str().parse::<bool>().unwrap_or(default_config.prefer_double_quotes);
 			
 			return Config
 			{
@@ -67,6 +69,7 @@ pub(crate) fn load(verbose:bool,dryrun:bool,path:&Path) -> Config
 				dryrun,
 				indentation:load_indentation(indent_style,indent_size),
 				curly_brace_on_next_line,
+				prefer_double_quotes,
 			};
 		}
 
@@ -93,7 +96,8 @@ pub(crate) struct Config
 	pub(crate) dryrun: bool,
 
 	pub(crate) indentation : Indentation,	
-	pub(crate) curly_brace_on_next_line : bool
+	pub(crate) curly_brace_on_next_line : bool,
+	pub(crate) prefer_double_quotes : bool,
 }
 
 #[derive(Debug,Copy,Clone)]
@@ -124,11 +128,14 @@ impl Config
 	{
 		let mut s = String::from("");
 		
-		let p1 = format!("Curlies on next line: {}\n",self.curly_brace_on_next_line);
-		s.push_str(p1.as_str());
+		let curlies = format!("Curlies on next line: {}\n",self.curly_brace_on_next_line);
+		s.push_str(curlies.as_str());
 
-		let p2 = format!("Indentation: {} - {}",self.indentation.style,self.indentation.size);
-		s.push_str(p2.as_str());
+		let double_quotes = format!("Prefer double quotes: {}\n",self.prefer_double_quotes);
+		s.push_str(double_quotes.as_str());
+
+		let indentation = format!("Indentation: {} - {}",self.indentation.style,self.indentation.size);
+		s.push_str(indentation.as_str());
 
 		return s;
 	}
