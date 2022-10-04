@@ -54,12 +54,10 @@ class TestClass extends TestSuperClass
 		if (test == 0) 
 		{
 			print("test is 0");
-		} 
-		else if (test == 1) 
+		} else if (test == 1) 
 		{
 			print("test is 1");
-		} 
-		else 
+		} else 
 		{
 			print("test is something else");
 		}

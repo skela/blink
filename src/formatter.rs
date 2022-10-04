@@ -13,6 +13,7 @@ pub(crate) struct FormatterResult
 	pub(crate) incorrect_curly_braces : i32,
 	pub(crate) incorrect_indentations : i32,
 	pub(crate) incorrect_quotes : i32,
+	pub(crate) incorrect_else_placements : i32,
 }
 
 impl Formatter
@@ -22,6 +23,7 @@ impl Formatter
 		let mut incorrect_curly_braces = 0;
 		let mut incorrect_indentations = 0;
 		let mut incorrect_quotes = 0;
+		let mut incorrect_else_placements = 0;
 
 		let forbidden_lines = self.forbidden_lines(&content);
 
@@ -49,7 +51,10 @@ impl Formatter
 			let (fline3, changed3) = self.fix_incorrect_quotes(fline2);
 			if changed3 { incorrect_quotes += 1; }
 
-			fixed_content.push_str(&fline3);
+			let (fline4, changed4) = self.fix_incorrect_else_placement(fline3);
+			if changed4 { incorrect_else_placements += 1; }			
+
+			fixed_content.push_str(&fline4);
 			fixed_content.push_str("\n");
 	
 			line_number += 1;
@@ -57,7 +62,7 @@ impl Formatter
 
 		let cleaned_content = self.remove_repeating_empty_lines(&fixed_content);
 
-		return FormatterResult { content:cleaned_content,incorrect_curly_braces,incorrect_indentations,incorrect_quotes };
+		return FormatterResult { content:cleaned_content,incorrect_curly_braces,incorrect_indentations,incorrect_quotes,incorrect_else_placements };
 	}
 
 	fn forbidden_lines(&self,content:&String) -> Vec<i32>
@@ -172,6 +177,27 @@ impl Formatter
 
 				return (s,true);
 			}
+		}
+		return (line,false);
+	}
+
+	fn fix_incorrect_else_placement(&self,line:String) -> (String,bool)
+	{
+		if self.config.curly_brace_on_next_line && line.contains("} else")
+		{
+			if line.ends_with("} else") || line.contains("} else ")
+			{
+				let line_length = line.len();
+				let delta = line_length - line.trim_start().len();
+
+				let mut s = String::from("}\n");
+				s.push_str(line.substring(0,delta));
+				s.push_str("else");
+
+				return (line.replace("} else",s.as_str()),true);
+			}
+			
+			return (line,false);
 		}
 		return (line,false);
 	}
