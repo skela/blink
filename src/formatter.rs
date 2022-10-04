@@ -43,14 +43,17 @@ impl Formatter
 			
 			let (fline2,changed2) = self.fix_incorrect_indentation(fline1,self.config.verbose);
 			if changed2 { incorrect_indentations += 1; }
+					
 			
 			fixed_content.push_str(&fline2);
 			fixed_content.push_str("\n");
-
+	
 			line_number += 1;
 		}
 
-		return FormatterResult { content:fixed_content,incorrect_curly_braces,incorrect_indentations };
+		let cleaned_content = self.remove_repeating_empty_lines(&fixed_content);
+
+		return FormatterResult { content:cleaned_content,incorrect_curly_braces,incorrect_indentations };
 	}
 
 	fn forbidden_lines(&self,content:&String) -> Vec<i32>
@@ -85,6 +88,56 @@ impl Formatter
 		}
 
 		return forbidden;
+	}
+
+	fn empty_lines(&self,content:&String) -> Vec<i32>
+	{
+		let mut empty : Vec<i32> = Vec::new();
+
+		let mut line_number = 0;
+
+		for line in content.lines()
+		{
+			if line.is_empty()
+			{
+				empty.push(line_number);
+			}
+			line_number += 1;
+		}
+
+		return empty;
+	}
+
+	fn remove_repeating_empty_lines(&self,content:&String) -> String
+	{
+		let forbidden_lines = self.forbidden_lines(&content);
+		let empty_lines = self.empty_lines(&content);
+
+		let mut line_number = 0;
+		let mut previous_line_number = -1;
+
+		let mut cleaned_content = String::from("");
+
+		for line in content.lines()
+		{
+			if forbidden_lines.contains(&line_number)
+			{
+				cleaned_content.push_str(&line); cleaned_content.push_str("\n");		
+				line_number += 1; previous_line_number += 1;
+				continue;
+			}
+			
+			if line_number > 0 && empty_lines.contains(&line_number) && empty_lines.contains(&previous_line_number)
+			{
+				line_number += 1; previous_line_number += 1;
+				continue;
+			}
+
+			cleaned_content.push_str(&line); cleaned_content.push_str("\n");
+			line_number += 1; previous_line_number += 1;
+		}
+
+		return cleaned_content;
 	}
 
 	fn fix_incorrect_curly_braces(&self,line:String) -> (String,bool)

@@ -63,6 +63,7 @@ class TestClass extends TestSuperClass
 		{
 			print("test is something else");
 		}
+
 	}
 
 	Widget simpleWidget1()

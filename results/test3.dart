@@ -34,7 +34,9 @@ class TestClass extends TestSuperClass
 
 	void printHello()
 	{
+
 		print('hello');
+
 	}
 
 	void ifs()
@@ -62,6 +64,7 @@ class TestClass extends TestSuperClass
 		{
 			print("test is something else");
 		}
+
 	}
 
 	Widget simpleWidget1()

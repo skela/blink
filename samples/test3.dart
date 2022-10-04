@@ -29,7 +29,9 @@ class TestClass extends TestSuperClass {
 	asd""";
 
   void printHello() {
+
     print('hello');
+
   }
 
   void ifs(){
@@ -53,6 +55,7 @@ class TestClass extends TestSuperClass {
     else {
       print("test is something else");
     }
+		
   }
 
   Widget simpleWidget1() {

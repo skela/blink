@@ -28,8 +28,11 @@ class TestClass extends TestSuperClass {
 	 who would prefer to remain exactly the way i am
 	asd""";
 
+
 	void printHello() {
+		
 		print('hello');
+
 	}
 
 	void ifs(){
@@ -54,6 +57,7 @@ class TestClass extends TestSuperClass {
 			print("test is something else");
 		}
 	}
+
 
 	Widget simpleWidget1() {
 		return SomeWidget(
