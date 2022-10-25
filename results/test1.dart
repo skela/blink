@@ -42,7 +42,7 @@ class TestClass extends TestSuperClass
 	String quotes()
 	{
 		String str = "potato+";
-		String output = str.replaceAll('-', '+').replaceAll('_', '/');
+		String output = str.replaceAll("-", "+").replaceAll("_", "/");
 		return output;
 	}
 

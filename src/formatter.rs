@@ -351,7 +351,7 @@ impl Formatter
 				}
 			}
 
-			if number_of_singles == 2 && number_of_doubles == 0
+			if number_of_singles > 0 && number_of_singles % 2 == 0 && number_of_doubles == 0
 			{
 				return (line.replace("'","\""),true);
 			}
