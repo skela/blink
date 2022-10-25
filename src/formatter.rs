@@ -61,8 +61,9 @@ impl Formatter
 		}
 
 		let cleaned_content = self.remove_repeating_empty_lines(&fixed_content);
+		let cleaned_content2 = self.remove_preceeding_empty_lines(&cleaned_content);
 
-		return FormatterResult { content:cleaned_content,incorrect_curly_braces,incorrect_indentations,incorrect_quotes,incorrect_else_placements };
+		return FormatterResult { content:cleaned_content2,incorrect_curly_braces,incorrect_indentations,incorrect_quotes,incorrect_else_placements };
 	}
 
 	fn forbidden_lines(&self,content:&String) -> Vec<i32>
@@ -107,7 +108,7 @@ impl Formatter
 
 		for line in content.lines()
 		{
-			if line.is_empty()
+			if line.is_empty() || line.trim().eq("{")
 			{
 				empty.push(line_number);
 			}
@@ -117,10 +118,39 @@ impl Formatter
 		return empty;
 	}
 
+	fn empty_lines_preceeding_end_curly(&self,content:&String) -> Vec<i32>
+	{
+		let mut empty : Vec<i32> = Vec::new();
+
+		let mut line_number = 0;
+		
+		let mut was_previous_line_empty = false;
+
+		for line in content.lines()
+		{
+			if line.is_empty()
+			{
+				was_previous_line_empty = true;				
+			}
+			else if was_previous_line_empty
+			{
+				if line.trim().eq("}")
+				{
+					empty.push(line_number-1);
+				}
+				was_previous_line_empty = false;
+			}
+
+			line_number += 1;
+		}
+
+		return empty;
+	}
+
 	fn remove_repeating_empty_lines(&self,content:&String) -> String
 	{
 		let forbidden_lines = self.forbidden_lines(&content);
-		let empty_lines = self.empty_lines(&content);
+		let empty_lines = self.empty_lines(&content);		
 
 		let mut line_number = 0;
 		let mut previous_line_number = -1;
@@ -144,6 +174,37 @@ impl Formatter
 
 			cleaned_content.push_str(&line); cleaned_content.push_str("\n");
 			line_number += 1; previous_line_number += 1;
+		}
+
+		return cleaned_content;
+	}
+
+	fn remove_preceeding_empty_lines(&self,content:&String) -> String
+	{
+		let forbidden_lines = self.forbidden_lines(&content);		
+		let empty_preceed_lines = self.empty_lines_preceeding_end_curly(&content);
+
+		let mut line_number = 0;		
+
+		let mut cleaned_content = String::from("");
+
+		for line in content.lines()
+		{
+			if forbidden_lines.contains(&line_number)
+			{
+				cleaned_content.push_str(&line); cleaned_content.push_str("\n");		
+				line_number += 1;
+				continue;
+			}
+			
+			if empty_preceed_lines.contains(&line_number)
+			{
+				line_number += 1;
+				continue;
+			}
+
+			cleaned_content.push_str(&line); cleaned_content.push_str("\n");
+			line_number += 1;
 		}
 
 		return cleaned_content;

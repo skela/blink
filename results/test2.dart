@@ -12,7 +12,6 @@ class SomeWidget extends Widget
 
 class TestSuperClass
 {
-
 }
 
 class TestClass extends TestSuperClass
@@ -34,9 +33,7 @@ class TestClass extends TestSuperClass
 
 	void printHello()
 	{
-
 		print("hello");
-
 	}
 
 	void ifs()

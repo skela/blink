@@ -1,6 +1,5 @@
 class Widget
 {
-
 }
 
 class SomeWidget extends Widget
@@ -13,7 +12,6 @@ class SomeWidget extends Widget
 
 class TestSuperClass
 {
-
 }
 
 class TestClass extends TestSuperClass
@@ -63,7 +61,6 @@ class TestClass extends TestSuperClass
 		{
 			print("test is something else");
 		}
-
 	}
 
 	Widget simpleWidget1()

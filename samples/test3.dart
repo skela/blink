@@ -54,7 +54,9 @@ class TestClass extends TestSuperClass {
     } 
     else {
       print("test is something else");
+			
     }
+		
 		
   }
 
