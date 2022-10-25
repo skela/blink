@@ -68,8 +68,30 @@ fn format_file_or_files_in_folder(config:config::Config,path:&PathBuf,output:Opt
 					match pr
 					{
 						Ok(entry) =>
-						{							
-							format_file(config,&entry.path(),output.to_owned());
+						{
+							let entry_path = entry.path();
+							if entry_path.is_dir()
+							{
+								if let Some(ref o) = output 
+								{
+									if let Some(entry_file_name) = entry_path.file_name()
+									{
+										format_file_or_files_in_folder(config,&entry_path,Some(o.join(entry_file_name)));
+									}
+									else
+									{
+										println!("Failed to load filename for path {}",entry_path.display());
+									}
+								} 
+								else 
+								{
+									format_file_or_files_in_folder(config,&entry_path,output.to_owned());
+								}								
+							}
+							else
+							{
+								format_file(config,&entry_path,output.to_owned());
+							}
 						}
 						Err(err) =>
 						{
