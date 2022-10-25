@@ -130,8 +130,7 @@ class TestClass extends TestSuperClass
 			break;
 			case Animal.Gerbil: {
 
-			}
-			break;
+			} break;
 		}
 
 		switch(animal){

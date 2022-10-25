@@ -14,6 +14,7 @@ pub(crate) struct FormatterResult
 	pub(crate) incorrect_indentations : i32,
 	pub(crate) incorrect_quotes : i32,
 	pub(crate) incorrect_else_placements : i32,
+	pub(crate) incorrect_break_placements : i32,
 }
 
 impl Formatter
@@ -24,6 +25,7 @@ impl Formatter
 		let mut incorrect_indentations = 0;
 		let mut incorrect_quotes = 0;
 		let mut incorrect_else_placements = 0;
+		let mut incorrect_break_placements = 0;
 
 		let forbidden_lines = self.forbidden_lines(&content);
 
@@ -52,9 +54,12 @@ impl Formatter
 			if changed3 { incorrect_quotes += 1; }
 
 			let (fline4, changed4) = self.fix_incorrect_else_placement(fline3);
-			if changed4 { incorrect_else_placements += 1; }			
+			if changed4 { incorrect_else_placements += 1; }
 
-			fixed_content.push_str(&fline4);
+			let (fline5, changed5) = self.fix_incorrect_break_placement(fline4);
+			if changed5 { incorrect_break_placements += 1; }
+
+			fixed_content.push_str(&fline5);
 			fixed_content.push_str("\n");
 	
 			line_number += 1;
@@ -63,7 +68,7 @@ impl Formatter
 		let cleaned_content = self.remove_repeating_empty_lines(&fixed_content);
 		let cleaned_content2 = self.remove_preceeding_empty_lines(&cleaned_content);
 
-		return FormatterResult { content:cleaned_content2,incorrect_curly_braces,incorrect_indentations,incorrect_quotes,incorrect_else_placements };
+		return FormatterResult { content:cleaned_content2,incorrect_curly_braces,incorrect_indentations,incorrect_quotes,incorrect_else_placements,incorrect_break_placements };
 	}
 
 	fn forbidden_lines(&self,content:&String) -> Vec<i32>
@@ -256,6 +261,27 @@ impl Formatter
 				s.push_str("else");
 
 				return (line.replace("} else",s.as_str()),true);
+			}
+			
+			return (line,false);
+		}
+		return (line,false);
+	}
+
+	fn fix_incorrect_break_placement(&self,line:String) -> (String,bool)
+	{
+		if self.config.curly_brace_on_next_line && line.contains("} break;") && !line.contains("{")
+		{
+			if line.ends_with("} break;") || line.contains("} break; ")
+			{
+				let line_length = line.len();
+				let delta = line_length - line.trim_start().len();
+
+				let mut s = String::from("}\n");
+				s.push_str(line.substring(0,delta));
+				s.push_str("break;");
+
+				return (line.replace("} break;",s.as_str()),true);
 			}
 			
 			return (line,false);

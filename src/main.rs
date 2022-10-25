@@ -137,7 +137,7 @@ fn format_file_in_folder(config:config::Config,path:&PathBuf,output_folder:&Path
 				println!("{}",result.content);
 
 				println!("Stats for {} (wrongs): ",path.display());
-				println!("  curlies: {} quotes: {} elses: {} indents: {}", result.incorrect_curly_braces,result.incorrect_quotes,result.incorrect_else_placements,result.incorrect_indentations);
+				println!("  curlies: {} quotes: {} elses: {} indents: {} breaks: {}", result.incorrect_curly_braces,result.incorrect_quotes,result.incorrect_else_placements,result.incorrect_indentations,result.incorrect_break_placements);
 			}
 			else
 			{
