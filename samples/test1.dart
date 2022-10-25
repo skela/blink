@@ -158,6 +158,19 @@ class TestClass extends TestSuperClass
 				break;
 		}
 	}
+
+	Future<int> commentedOut() async
+	{
+		// var comment = await getComment();
+		// var res = await check(comment);
+		// if (checkResult(res))
+		// {
+		// 	await storeComment(comment);
+		// 	return res;
+		// }
+		// return res;
+		return Future.value(1);
+	}
 }
 
 enum Animal

@@ -82,6 +82,12 @@ impl Formatter
 
 		for line in content.lines()
 		{
+			if line.trim().starts_with("//")
+			{
+				forbidden.push(line_number);
+				line_number += 1;
+				continue;
+			}
 			if line.contains(dquotes)
 			{
 				if is_inside_dquotes
