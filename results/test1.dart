@@ -41,6 +41,7 @@ class TestClass extends TestSuperClass
 
 	String quotes()
 	{
+		Encoding.getByName("utf-8");
 		String str = "potato+";
 		String output = str.replaceAll("-", "+").replaceAll("_", "/");
 		return output;
