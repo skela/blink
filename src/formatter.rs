@@ -334,8 +334,8 @@ impl Formatter
 	
 	fn fix_incorrect_quotes(&self,line:String) -> (String,bool)
 	{
-		if self.config.prefer_double_quotes && line.contains("'")
-		{
+		if self.config.prefer_double_quotes && line.contains("'") && !line.starts_with("import '") && !line.starts_with("export '")
+		{			
 			let mut number_of_singles = 0;
 			let mut number_of_doubles = 0;
 			for char in line.chars()

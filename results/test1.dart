@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class Widget
 {
 }
@@ -35,6 +37,13 @@ class TestClass extends TestSuperClass
 	void printHello()
 	{
 		print("hello");
+	}
+
+	String quotes()
+	{
+		String str = "potato+";
+		String output = str.replaceAll('-', '+').replaceAll('_', '/');
+		return output;
 	}
 
 	void ifs()
