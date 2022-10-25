@@ -14,6 +14,7 @@ class TestSuperClass {
 
 class TestClass extends TestSuperClass {
   int test = 0;
+	Animal animal = Animal.Gerbil;
 
   String whatever1 = 
 	"""asd
@@ -73,4 +74,76 @@ class TestClass extends TestSuperClass {
       message: "Message",
     );
   }
+
+  void switches1()
+  {
+    switch(animal){
+      case Animal.Cat: break;
+      case Animal.Dog: break;
+      case Animal.Gerbil: break;
+    }
+
+    switch(animal){
+      case Animal.Cat: 
+      break;
+      case Animal.Dog: 
+      break;
+      case Animal.Gerbil: 
+      break;
+    }
+		
+    switch(animal){
+      case Animal.Cat: 
+        break;
+      case Animal.Dog: 
+        break;
+      case Animal.Gerbil: 
+        break;
+    }
+  }
+
+  void switches2()
+  {
+    switch(animal){
+      case Animal.Cat: {} break;
+      case Animal.Dog: {} break;
+      case Animal.Gerbil: {} break;
+    }
+
+    switch(animal){
+      case Animal.Cat: {
+
+      }
+      break;
+      case Animal.Dog: {
+
+      }
+      break;
+      case Animal.Gerbil: {
+
+      }
+      break;
+    }
+    
+    switch(animal){
+      case Animal.Cat: {
+      }
+        break;
+      case Animal.Dog: {
+
+      }
+        break;
+      case Animal.Gerbil: {
+
+      }
+        break;
+    }
+  }
+}
+
+enum Animal
+{
+  Cat,
+  Dog,	
+  Gerbil,   
 }
