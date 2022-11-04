@@ -36,6 +36,15 @@ class TestClass extends TestSuperClass
 	 who would prefer to remain exactly the way i am
 	asd""";
 
+	String whatever3 = '''
+	
+		{
+			"somejson":"testing",
+			"yay":1
+		}
+	
+	''';
+
 	void printHello() 
 	{
 		print('hello');

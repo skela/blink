@@ -77,9 +77,35 @@ impl Formatter
 
 		let mut line_number = 0;
 
+		let squotes = "'''";
+		let mut is_inside_squotes = false;
+
+		for line in content.lines()
+		{			
+			if line.contains(squotes)
+			{
+				if is_inside_squotes
+				{
+					is_inside_squotes = false;
+					forbidden.push(line_number);
+				}
+				else
+				{
+					is_inside_squotes = true;
+					forbidden.push(line_number);
+				}
+			}
+			else if is_inside_squotes
+			{
+				forbidden.push(line_number);
+			}
+			line_number += 1;
+		}
+
 		let mut is_inside_dquotes = false;
 		let dquotes = "\"\"\"";
-
+		line_number = 0;
+		
 		for line in content.lines()
 		{
 			if line.trim().starts_with("//")
