@@ -4,6 +4,9 @@ mkfile_dir = $(dir $(mkfile_path))
 build:
 	cargo build --release
 
+run: build
+	target/release/blink samples/ --output results/
+
 all:
 	docker build --platform darwin/arm64 . -t blink-macos-arm64
 	docker build --platform linux/amd64 . -t blink-linux-amd64

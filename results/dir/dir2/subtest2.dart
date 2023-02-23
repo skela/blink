@@ -112,11 +112,11 @@ class TestClass extends TestSuperClass
 		switch(animal)
 		{
 			case Animal.Cat:
-				break;
+			break;
 			case Animal.Dog:
-				break;
+			break;
 			case Animal.Gerbil:
-				break;
+			break;
 		}
 	}
 
@@ -150,15 +150,15 @@ class TestClass extends TestSuperClass
 			case Animal.Cat:
 			{
 			}
-				break;
+			break;
 			case Animal.Dog:
 			{
 			}
-				break;
+			break;
 			case Animal.Gerbil:
 			{
 			}
-				break;
+			break;
 		}
 	}
 

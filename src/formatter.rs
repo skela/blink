@@ -17,6 +17,12 @@ pub(crate) struct FormatterResult
 	pub(crate) incorrect_break_placements : i32,
 }
 
+struct IncorrectSwitchBreakIndentation
+{	
+	line : i32,
+	indent: String
+}
+
 impl Formatter
 {
 	pub(crate) fn format(&self,content:String) -> FormatterResult
@@ -65,10 +71,19 @@ impl Formatter
 			line_number += 1;
 		}
 
-		let cleaned_content = self.remove_repeating_empty_lines(&fixed_content);
-		let cleaned_content2 = self.remove_preceeding_empty_lines(&cleaned_content);
+		let cleaned_content1 = self.remove_repeating_empty_lines(&fixed_content);
+		let cleaned_content2 = self.remove_preceeding_empty_lines(&cleaned_content1);
+		let cleaned_content3 = self.correct_switch_break_placements(&cleaned_content2);
 
-		return FormatterResult { content:cleaned_content2,incorrect_curly_braces,incorrect_indentations,incorrect_quotes,incorrect_else_placements,incorrect_break_placements };
+		return FormatterResult 
+		{ 
+			content:cleaned_content3,
+			incorrect_curly_braces,
+			incorrect_indentations,
+			incorrect_quotes,
+			incorrect_else_placements,
+			incorrect_break_placements
+		};
 	}
 
 	fn forbidden_lines(&self,content:&String) -> Vec<i32>
@@ -246,6 +261,87 @@ impl Formatter
 
 		return cleaned_content;
 	}
+
+	fn incorrect_switch_break_indendation_lines(&self,content:&String) -> Vec<IncorrectSwitchBreakIndentation>
+	{
+		let forbidden_lines = self.forbidden_lines(&content);
+
+		let mut wrong : Vec<IncorrectSwitchBreakIndentation> = Vec::new();
+
+		let mut line_number = 0;
+		
+		let mut last_case_line = -1;
+		let mut last_case_line_indent = "";
+
+		for line in content.lines()
+		{
+			if forbidden_lines.contains(&line_number)
+			{
+				line_number += 1;
+				continue;
+			}
+
+			if last_case_line == -1 && line.trim().contains("case ") && !line.contains(" break;") && !line.contains(" return;") && !line.contains(" return ")
+			{
+				last_case_line = line_number;
+				let delta = line.len() - line.trim_start().len();
+				last_case_line_indent = line.substring(0,delta);				
+			}
+			else
+			{
+				if last_case_line != -1
+				{
+					if line.trim().starts_with("break;")
+					{
+						wrong.push(IncorrectSwitchBreakIndentation{ line: line_number, indent: String::from(last_case_line_indent) });
+						last_case_line = -1;
+					}
+					else if line.trim().starts_with("return;") || line.contains(" return;") || line.contains(" return ")
+					{
+						last_case_line = -1;
+					}
+				}
+			}			
+
+			line_number += 1;
+		}
+
+		return wrong;
+	}
+
+	fn correct_switch_break_placements(&self,content:&String) -> String
+	{
+		let switch_breaks = self.incorrect_switch_break_indendation_lines(&content);
+
+		let mut line_number = 0;
+
+		let mut cleaned_content = String::from("");
+
+		let mut correction_needed = false;
+
+		for line in content.lines()
+		{
+			for br in &switch_breaks
+			{
+				if br.line == line_number
+				{
+					cleaned_content.push_str(&br.indent); cleaned_content.push_str(&line.trim_start());
+					cleaned_content.push_str("\n");
+					correction_needed = true;
+					break;
+				}
+			}
+			if !correction_needed
+			{
+				cleaned_content.push_str(&line);
+				cleaned_content.push_str("\n");
+			}
+			correction_needed = false;
+			line_number += 1;
+		}
+
+		return cleaned_content;
+	}	
 
 	fn fix_incorrect_curly_braces(&self,line:String) -> (String,bool)
 	{
