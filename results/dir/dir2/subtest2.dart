@@ -174,6 +174,32 @@ class TestClass extends TestSuperClass
 		// return res;
 		return Future.value(1);
 	}
+
+	String get animalName
+	{
+		switch(animal)
+		{
+			case Animal.Cat: return "cat";
+			case Animal.Gerbil: {}
+			break;
+			case Animal.Dog: return "dog";
+		}
+		return "something else";
+	}
+
+	void forSwitches()
+	{
+		for (animal in Animal.values)
+		{
+			switch (animal)
+			{
+				case Animal.Cat: print(animalName);
+				break;
+				case Animal.Gerbil: continue;
+				case Animal.Dog: print(animalName); break;
+			}
+		}
+	}
 }
 
 enum Animal

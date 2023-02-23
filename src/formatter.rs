@@ -73,7 +73,7 @@ impl Formatter
 
 		let cleaned_content1 = self.remove_repeating_empty_lines(&fixed_content);
 		let cleaned_content2 = self.remove_preceeding_empty_lines(&cleaned_content1);
-		let cleaned_content3 = self.correct_switch_break_placements(&cleaned_content2);
+		let cleaned_content3 = self.correct_switch_break_indentations(&cleaned_content2);
 
 		return FormatterResult 
 		{ 
@@ -309,7 +309,7 @@ impl Formatter
 		return wrong;
 	}
 
-	fn correct_switch_break_placements(&self,content:&String) -> String
+	fn correct_switch_break_indentations(&self,content:&String) -> String
 	{
 		let switch_breaks = self.incorrect_switch_break_indendation_lines(&content);
 
