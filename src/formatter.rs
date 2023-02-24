@@ -74,10 +74,11 @@ impl Formatter
 		let cleaned_content1 = self.remove_repeating_empty_lines(&fixed_content);
 		let cleaned_content2 = self.remove_preceeding_empty_lines(&cleaned_content1);
 		let cleaned_content3 = self.correct_switch_break_indentations(&cleaned_content2);
+		let cleaned_content4 = self.correct_weird_elses(&cleaned_content3);
 
 		return FormatterResult 
 		{ 
-			content:cleaned_content3,
+			content:cleaned_content4,
 			incorrect_curly_braces,
 			incorrect_indentations,
 			incorrect_quotes,
@@ -262,6 +263,32 @@ impl Formatter
 		return cleaned_content;
 	}
 
+	fn correct_weird_elses(&self,content:&String) -> String
+	{
+		let forbidden_lines = self.forbidden_lines(&content);		
+
+		let mut line_number = 0;		
+
+		let mut cleaned_content = String::from("");
+
+		for line in content.lines()
+		{
+			if forbidden_lines.contains(&line_number)
+			{
+				cleaned_content.push_str(&line); cleaned_content.push_str("\n");		
+				line_number += 1;
+				continue;
+			}
+			
+			let (fixed_line,_) = self.fix_incorrect_else_placement(String::from(line));
+
+			cleaned_content.push_str(fixed_line.as_str()); cleaned_content.push_str("\n");
+			line_number += 1;
+		}
+
+		return cleaned_content;
+	}
+
 	fn incorrect_switch_break_indendation_lines(&self,content:&String) -> Vec<IncorrectSwitchBreakIndentation>
 	{
 		let forbidden_lines = self.forbidden_lines(&content);
@@ -383,11 +410,12 @@ impl Formatter
 			{
 				let line_length = line.len();
 				let delta = line_length - line.trim_start().len();
+				let pre = line.substring(0,delta);
 
 				let mut s = String::from("}\n");
-				s.push_str(line.substring(0,delta));
+				s.push_str(pre);
 				s.push_str("else");
-
+				
 				return (line.replace("} else",s.as_str()),true);
 			}
 			
@@ -404,9 +432,10 @@ impl Formatter
 			{
 				let line_length = line.len();
 				let delta = line_length - line.trim_start().len();
+				let pre = line.substring(0,delta);
 
 				let mut s = String::from("}\n");
-				s.push_str(line.substring(0,delta));
+				s.push_str(pre);
 				s.push_str("break;");
 
 				return (line.replace("} break;",s.as_str()),true);

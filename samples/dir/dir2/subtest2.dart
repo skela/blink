@@ -76,6 +76,27 @@ class TestClass extends TestSuperClass
 	}
 
 
+	void apeshitifs() {
+		if (test == 0){
+			print("no");
+		} else if (test == 50) {
+			print("maybe");
+		} else {
+			print("yay");
+		}
+	}
+
+	void apeshitifs2() {
+		if (test == 0){
+			print("no");
+		} else if (test == 50) {
+			print("maybe");
+		} else
+		{
+			print("yay");
+		}
+	}
+
 	Widget simpleWidget1() 
 	{
 		return SomeWidget(
