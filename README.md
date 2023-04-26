@@ -18,3 +18,11 @@ indent_size = 2
 curly_brace_on_next_line = true
 prefer_double_quotes = true
 ```
+
+# Getting started
+
+You will need to install rust in order to build this project.
+
+For Linux (Arch): `yay install rust`
+
+For macOS: `brew install rust`
