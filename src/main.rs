@@ -21,6 +21,11 @@ fn main()
 	{
 		format_standard_input(config);
 	}
+	else if args.tree_sitter
+	{
+		let formatter = formatter::Formatter { config, };
+		formatter.yay();
+	}
 	else
 	{
 		format_file_or_files_in_folder(config,&args.path,args.output);
@@ -204,6 +209,10 @@ struct Arguments
 	#[clap(short='s',long="standard-input")]
 	/// Output to the terminal only, don't make any changes
 	standard_input: bool,
+
+	#[clap(short='t',long="tree-sitter")]
+	/// Output to the terminal only, don't make any changes
+	tree_sitter: bool,
 
 	#[clap(short='c',long="check-config")]
 	/// Check the config, don't make any changes

@@ -26,3 +26,6 @@ You will need to install rust in order to build this project.
 For Linux (Arch): `yay install rust`
 
 For macOS: `brew install rust`
+
+# Treesitter branch
+- `git clone git@github.com:UserNobody14/tree-sitter-dart.git`
