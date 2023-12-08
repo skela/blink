@@ -79,6 +79,24 @@
 		{
 			"type": "lldb",
 			"request": "launch",
+			"name": "blink treesitter",
+			"cargo": {
+				"args": [
+					"build",
+					"--bin=blink",
+					"--package=blink"
+				],
+				"filter": {
+					"name": "blink",
+					"kind": "bin"
+				}
+			},
+			"args": ["samples/","-t"],
+			"cwd": "${workspaceFolder}"
+		},
+		{
+			"type": "lldb",
+			"request": "launch",
 			"name": "Debug unit tests in executable 'blink'",
 			"cargo": {
 				"args": [
