@@ -1,6 +1,8 @@
-disable_all_formatting = true
-use_small_heuristics = "Max"
-unstable_features = true
 hard_tabs = true
+unstable_features = true
+
+#disable_all_formatting = true
+use_small_heuristics = "Max"
 brace_style = "AlwaysNextLine"
 control_brace_style = "AlwaysNextLine"
+
