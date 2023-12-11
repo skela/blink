@@ -91,15 +91,7 @@ impl Formatter
 		let cleaned_content3 = self.correct_switch_break_indentations(&cleaned_content2);
 		let cleaned_content4 = self.correct_weird_elses(&cleaned_content3);
 
-		return FormatterResult
-		{
-			content: cleaned_content4,
-			incorrect_curly_braces,
-			incorrect_indentations,
-			incorrect_quotes,
-			incorrect_else_placements,
-			incorrect_break_placements,
-		};
+		return FormatterResult { content: cleaned_content4, incorrect_curly_braces, incorrect_indentations, incorrect_quotes, incorrect_else_placements, incorrect_break_placements };
 	}
 
 	fn forbidden_lines(&self, content: &String) -> Vec<i32>
@@ -313,7 +305,7 @@ impl Formatter
 		return cleaned_content;
 	}
 
-	fn incorrect_switch_break_indendation_lines(&self,content: &String) -> Vec<IncorrectSwitchBreakIndentation>
+	fn incorrect_switch_break_indendation_lines(&self, content: &String) -> Vec<IncorrectSwitchBreakIndentation>
 	{
 		let forbidden_lines = self.forbidden_lines(&content);
 
@@ -332,11 +324,7 @@ impl Formatter
 				continue;
 			}
 
-			if last_case_line == -1
-				&& line.trim().contains("case ")
-				&& !line.contains(" break;")
-				&& !line.contains(" return;")
-				&& !line.contains(" return ")
+			if last_case_line == -1 && line.trim().contains("case ") && !line.contains(" break;") && !line.contains(" return;") && !line.contains(" return ")
 			{
 				last_case_line = line_number;
 				let delta = line.len() - line.trim_start().len();
@@ -348,11 +336,7 @@ impl Formatter
 				{
 					if line.trim().starts_with("break;")
 					{
-						wrong.push(IncorrectSwitchBreakIndentation
-						{
-							line: line_number,
-							indent: String::from(last_case_line_indent),
-						});
+						wrong.push(IncorrectSwitchBreakIndentation { line: line_number, indent: String::from(last_case_line_indent) });
 						last_case_line = -1;
 					}
 					else if line.trim().starts_with("return;") || line.contains(" return;") || line.contains(" return ")
@@ -483,7 +467,8 @@ impl Formatter
 	{
 		match self.config.indentation.style
 		{
-			IndentationStyle::Tabs => {
+			IndentationStyle::Tabs =>
+			{
 				let tline = line.trim_start();
 
 				if tline.len() != line.len()
@@ -512,7 +497,8 @@ impl Formatter
 				}
 			}
 
-			IndentationStyle::Spaces => {}
+			IndentationStyle::Spaces =>
+			{}
 		}
 
 		return (line, false);
@@ -520,10 +506,7 @@ impl Formatter
 
 	fn fix_incorrect_quotes(&self, line: String) -> (String, bool)
 	{
-		if self.config.prefer_double_quotes
-			&& line.contains("'")
-			&& !line.starts_with("import '")
-			&& !line.starts_with("export '")
+		if self.config.prefer_double_quotes && line.contains("'") && !line.starts_with("import '") && !line.starts_with("export '")
 		{
 			let mut number_of_singles = 0;
 			let mut number_of_doubles = 0;
@@ -551,11 +534,13 @@ impl Formatter
 
 use tree_sitter::{Language, Node, Parser};
 
-extern "C" { fn tree_sitter_dart() -> Language; }
+extern "C" {
+	fn tree_sitter_dart() -> Language;
+}
 
 impl Formatter
 {
-	pub(crate) fn yay(&self)
+	pub(crate) fn tree_sitter_test(&self)
 	{
 		let source_code_good = r#"
 		class Testing
@@ -627,11 +612,9 @@ impl Formatter
 		"#;
 
 		// self.analyze(source_code_bad);
-
-		self.format_ts();
 	}
 
-	fn analyze(&self, source_code: &str)
+	fn analyze(&self, source_code: &String)
 	{
 		let mut parser = Parser::new();
 
@@ -656,7 +639,7 @@ impl Formatter
 		}
 	}
 
-	fn format_ts(&self)
+	fn tree_sitter_sample(&self) -> String
 	{
 		let src = r#"
 class ABC
@@ -693,20 +676,47 @@ class ABC
 		}
 		"#;
 
+		return src.to_string();
+	}
+
+	pub(crate) fn tree_sitter_analyze(&self)
+	{
+		let src = self.tree_sitter_sample();
+		self.analyze(&src);
+	}
+
+	pub(crate) fn tree_sitter_format(&self)
+	{
+		let mut src = self.tree_sitter_sample();
+
 		let mut parser = Parser::new();
 
 		let language = unsafe { tree_sitter_dart() };
 		parser.set_language(language).unwrap();
 
-		let tree = parser.parse(src, None).unwrap();
+		let tree = parser.parse(&src, None).unwrap();
 		let root_node = tree.root_node();
 
-		let string = src.to_string();
+		self.format_ts_node(&mut src, root_node, 0);
 
-		self.format_ts_node(&string,root_node,0);
+		println!("String is {}", src);
 	}
 
-	fn format_ts_node(&self, string:&String, node: Node, level: usize)
+	fn coordinates_for_node(&self, node: Node) -> FormatNodeCoordinates
+	{
+		return FormatNodeCoordinates { start_byte: node.start_byte(), end_byte: node.end_byte(), kind: node.kind().to_string() };
+	}
+
+	fn find_curly_parent_coordinates(&self, node: Node) -> Option<FormatNodeCoordinates>
+	{
+		if let Some(p) = node.parent()
+		{
+			return Some(self.coordinates_for_node(p));
+		}
+		return None;
+	}
+
+	fn format_ts_node(&self, string: &mut String, node: Node, level: usize)
 	{
 		let mut cursor = node.walk();
 		let children = node.children(&mut cursor);
@@ -715,26 +725,29 @@ class ABC
 		{
 			if child.kind().eq("{")
 			{
-				match child.parent()
+				if let Some(parent) = self.find_curly_parent_coordinates(node)
 				{
-					None => {}
-					Some(parent) => {
-						let pstart = parent.start_byte();
-						let cstart = child.start_byte();
-						let sub = string.substring(pstart, cstart);
-						println!("Sub is {} - {}:{}",sub,pstart,cstart);
-						if sub.contains("\n")
-						{
-							println!(
-								"Found curly on the same line as parent: {} column is {}",
-								child.start_position().row,
-								child.start_position().column
-							);
-						}
+					let pstart = parent.start_byte;
+					let c = child.end_byte();
+					let sub = string.substring(pstart, c);
+					println!("Sub for parent {} child {} is {} - {}:{}", parent.kind, child.kind(), sub, pstart, c);
+					if !sub.contains("\n")
+					{
+						println!("Found curly on the same line as parent: {} column is {}", child.start_position().row, child.start_position().column);
+						string.insert(child.start_byte(), '\n'); // TODO: Instead of making the
+						                 // change here, we should store the position of the curly, then modify
+						                 // all incorrect curlies after its run through it.
 					}
 				}
 			}
 			self.format_ts_node(string, child, level + 1);
 		}
 	}
+}
+
+struct FormatNodeCoordinates
+{
+	start_byte: usize,
+	end_byte: usize,
+	kind: String,
 }

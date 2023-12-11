@@ -29,3 +29,9 @@ For macOS: `brew install rust`
 
 # Treesitter branch
 - `git clone git@github.com:UserNobody14/tree-sitter-dart.git`
+
+rustfmt is super flaky, and you cannot disable it seems, because if u do, nvim completely ignores editorconfig rules for indentation,
+so have no choice but to enable the formatter, luckily there are some rules regarding the placement of the curly, that only take effect
+when running a nightly, instructions on how to do that here:
+
+https://stackoverflow.com/questions/73455965/why-do-i-get-unstable-features-are-only-available-in-nightly-channel-when-runn
