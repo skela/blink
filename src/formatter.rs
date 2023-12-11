@@ -540,80 +540,6 @@ extern "C" {
 
 impl Formatter
 {
-	pub(crate) fn tree_sitter_test(&self)
-	{
-		let source_code_good = r#"
-		class Testing
-		{
-			Testing();
-
-			int a = 1;
-
-			void testingLoops()
-			{
-				int sum = 0;
-				for (int i = 0; i<5; i++)
-					sum += 1;
-			}
-
-			void testingLoopsWithCurlies()
-			{
-				int sum = 0;
-				for (int i = 0; i<5; i++)
-				{
-					sum += 1;
-				}
-			}
-
-			bool testingReturn()
-			{
-				return true;
-			}
-
-			bool get testingInlineReturn => true;
-
-			Map<String,dynamic> dict = {
-				"testing":1,
-			};
-		}
-		"#;
-
-		// self.analyze(source_code_good);
-
-		let source_code_bad = r#"
-		class Testing {
-			Testing();
-
-			int a = 1;
-
-			void testingLoops(){
-				int sum = 0;
-				for (int i = 0; i<5; i++)
-					sum += 1;
-			}
-
-			void testingLoopsWithCurlies(){
-				int sum = 0;
-				for (int i = 0; i<5; i++){
-					sum += 1;
-				}
-			}
-
-			bool testingReturn(){
-				return true;
-			}
-
-			bool get testingInlineReturn => true;
-
-			Map<String,dynamic> dict = {
-				"testing":1,
-			};
-		}
-		"#;
-
-		// self.analyze(source_code_bad);
-	}
-
 	fn analyze(&self, source_code: &String)
 	{
 		let mut parser = Parser::new();
@@ -741,7 +667,7 @@ enum Animal{
 
 	fn coordinates_for_node(&self, node: Node) -> FormatNodeCoordinates
 	{
-		return FormatNodeCoordinates { start_byte: node.start_byte(), end_byte: node.end_byte(), kind: node.kind().to_string() };
+		return FormatNodeCoordinates { start_byte: node.start_byte(), kind: node.kind().to_string() };
 	}
 
 	fn find_curly_parent_coordinates(&self, node: Node) -> Option<FormatNodeCoordinates>
@@ -814,6 +740,5 @@ enum Animal{
 struct FormatNodeCoordinates
 {
 	start_byte: usize,
-	end_byte: usize,
 	kind: String,
 }
