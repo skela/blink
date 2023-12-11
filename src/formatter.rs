@@ -646,6 +646,15 @@ class ABC
 {
 	int b = 2;
 }
+
+class DEF
+{
+    final int a;
+    final int b;
+
+    DEF({required this.a,required this.b});
+}
+
 		class Testing {
 			Testing();
 
@@ -673,7 +682,31 @@ class ABC
 			Map<String,dynamic> dict = {
 				"testing":1,
 			};
+
+            void testingSwitchBreaks()
+            {
+                final animal = Animal.Dog;
+                switch(animal){
+                    case Animal.Dog: print("This is a dog"); break;
+                    case Animal.Cat:
+                        print("This is a cat");
+                    break;
+                    case Animal.Horse:{
+                        print("This is a horse");
+                    }
+                    break;
+                    case Animal.Bird: print("This is a bird"); break;
+                }
+            }
 		}
+
+enum Animal{
+    Dog,
+    Cat,
+    Horse,
+    Bird,
+}
+
 		"#;
 
 		return src.to_string();
@@ -697,8 +730,12 @@ class ABC
 		let tree = parser.parse(&src, None).unwrap();
 		let root_node = tree.root_node();
 
-		self.format_ts_node(&mut src, root_node, 0);
+		let curlies = self.locate_curlies(&mut src, root_node, 0);
 
+		for curly in curlies.iter().rev()
+		{
+			src.insert(*curly, '\n');
+		}
 		println!("String is {}", src);
 	}
 
@@ -711,13 +748,43 @@ class ABC
 	{
 		if let Some(p) = node.parent()
 		{
-			return Some(self.coordinates_for_node(p));
+			return match p.kind()
+			{
+				"set_or_map_literal" => None,
+				"block" | "class_body" | "enum_body" | "switch_block" =>
+				{
+					if let Some(p2) = p.parent()
+					{
+						if p2.kind() == "function_body"
+						{
+							if let Some(ps) = p2.prev_sibling()
+							{
+								Some(self.coordinates_for_node(ps))
+							}
+							else
+							{
+								None
+							}
+						}
+						else
+						{
+							Some(self.coordinates_for_node(p2))
+						}
+					}
+					else
+					{
+						None
+					}
+				}
+				_ => None,
+			};
 		}
 		return None;
 	}
 
-	fn format_ts_node(&self, string: &mut String, node: Node, level: usize)
+	fn locate_curlies(&self, string: &mut String, node: Node, level: usize) -> Vec<usize>
 	{
+		let mut curlies: Vec<usize> = Vec::new();
 		let mut cursor = node.walk();
 		let children = node.children(&mut cursor);
 
@@ -725,7 +792,7 @@ class ABC
 		{
 			if child.kind().eq("{")
 			{
-				if let Some(parent) = self.find_curly_parent_coordinates(node)
+				if let Some(parent) = self.find_curly_parent_coordinates(child)
 				{
 					let pstart = parent.start_byte;
 					let c = child.end_byte();
@@ -734,14 +801,13 @@ class ABC
 					if !sub.contains("\n")
 					{
 						println!("Found curly on the same line as parent: {} column is {}", child.start_position().row, child.start_position().column);
-						string.insert(child.start_byte(), '\n'); // TODO: Instead of making the
-						                 // change here, we should store the position of the curly, then modify
-						                 // all incorrect curlies after its run through it.
+						curlies.push(child.start_byte());
 					}
 				}
 			}
-			self.format_ts_node(string, child, level + 1);
+			curlies.extend(self.locate_curlies(string, child, level + 1));
 		}
+		return curlies;
 	}
 }
 
