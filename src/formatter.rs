@@ -628,7 +628,7 @@ class DEF
 
 enum Animal{
     Dog,
-    Cat,
+		Cat,
     Horse,
     Bird,
 }
@@ -653,21 +653,34 @@ enum Animal{
 		let language = unsafe { tree_sitter_dart() };
 		parser.set_language(language).unwrap();
 
-		let tree = parser.parse(&src, None).unwrap();
-		let root_node = tree.root_node();
+		let mut tree = parser.parse(&src, None).unwrap();
+		let mut root_node = tree.root_node();
+
+		let indents = self.locate_indents(&mut src, root_node, 0);
+
+		let indent_symbol = "\t";
+		// let indent_symbol = "X";
+
+		for indent in indents.iter().rev()
+		{
+			src.replace_range(indent.start..indent.end, indent_symbol.repeat(indent.indent).as_str());
+		}
+
+		tree = parser.parse(&src, None).unwrap();
+		root_node = tree.root_node();
 
 		let curlies = self.locate_curlies(&mut src, root_node, 0);
 
 		for curly in curlies.iter().rev()
 		{
-			src.insert(*curly, '\n');
+			src.insert(curly.location, '\n');
+			// for i in 0..curly.indent
+			// {
+			// 	src.insert(curly.location + i, '\t');
+			// }
 		}
-		println!("String is {}", src);
-	}
 
-	fn coordinates_for_node(&self, node: Node) -> FormatNodeCoordinates
-	{
-		return FormatNodeCoordinates { start_byte: node.start_byte(), kind: node.kind().to_string() };
+		println!("String is {}", src);
 	}
 
 	fn find_curly_parent_coordinates(&self, node: Node) -> Option<FormatNodeCoordinates>
@@ -685,7 +698,7 @@ enum Animal{
 						{
 							if let Some(ps) = p2.prev_sibling()
 							{
-								Some(self.coordinates_for_node(ps))
+								Some(ps.format_coordinates())
 							}
 							else
 							{
@@ -694,7 +707,7 @@ enum Animal{
 						}
 						else
 						{
-							Some(self.coordinates_for_node(p2))
+							Some(p2.format_coordinates())
 						}
 					}
 					else
@@ -708,9 +721,9 @@ enum Animal{
 		return None;
 	}
 
-	fn locate_curlies(&self, string: &mut String, node: Node, level: usize) -> Vec<usize>
+	fn locate_curlies(&self, string: &mut String, node: Node, level: usize) -> Vec<FormatCurly>
 	{
-		let mut curlies: Vec<usize> = Vec::new();
+		let mut curlies: Vec<FormatCurly> = Vec::new();
 		let mut cursor = node.walk();
 		let children = node.children(&mut cursor);
 
@@ -723,17 +736,99 @@ enum Animal{
 					let pstart = parent.start_byte;
 					let c = child.end_byte();
 					let sub = string.substring(pstart, c);
-					println!("Sub for parent {} child {} is {} - {}:{}", parent.kind, child.kind(), sub, pstart, c);
+					// println!("Sub for parent {} child {} is {} - {}:{}", parent.kind, child.kind(), sub, pstart, c);
 					if !sub.contains("\n")
 					{
-						println!("Found curly on the same line as parent: {} column is {}", child.start_position().row, child.start_position().column);
-						curlies.push(child.start_byte());
+						// println!("Found curly on the same line as parent: {} column is {}", child.start_position().row, child.start_position().column);
+						curlies.push(FormatCurly { location: child.start_byte(), indent: level });
 					}
 				}
 			}
 			curlies.extend(self.locate_curlies(string, child, level + 1));
 		}
 		return curlies;
+	}
+
+	fn indent_from_level(&self, node: Node, level: usize) -> usize
+	{
+		return match node.kind()
+		{
+			"class_definition" | "enum_declaration" => level,
+			"declaration" | "method_signature" => level - 1,
+			"enum_constant" => level - 1,
+			_ => level,
+		};
+	}
+
+	fn locate_indents(&self, string: &mut String, node: Node, level: usize) -> Vec<FormatIndent>
+	{
+		let mut indents: Vec<FormatIndent> = Vec::new();
+		let mut cursor = node.walk();
+		let children = node.children(&mut cursor);
+
+		for child in children
+		{
+			match child.kind()
+			{
+				"class_definition" | "enum_declaration" =>
+				{
+					let cstart = child.start_byte();
+					if let Some(lstart) = string[..cstart].rfind('\n')
+					{
+						let start = lstart + 1;
+						let end = cstart;
+						// println!("found class/enum at {} - lstart {} - indent {}:\n{}", end, start, self.indent_from_level(child, level), string.substring(start, end + 11));
+						if start != end
+						{
+							indents.push(FormatIndent { start, end, indent: self.indent_from_level(child, level) });
+						}
+					}
+				}
+				"method_signature" | "declaration" | "enum_constant" =>
+				{
+					let cstart = child.start_byte();
+					if let Some(lstart) = string[..cstart].rfind('\n')
+					{
+						let start = lstart + 1;
+						let end = cstart;
+						println!("found method at {} - lstart {} - indent {}:\n{}", end, start, self.indent_from_level(child, level), string.substring(start, end + 11));
+						if start != end
+						{
+							indents.push(FormatIndent { start, end, indent: self.indent_from_level(child, level) });
+						}
+					}
+				}
+				_ => (),
+			}
+			indents.extend(self.locate_indents(string, child, level + 1));
+		}
+		return indents;
+	}
+}
+
+struct FormatIndent
+{
+	start: usize,
+	end: usize,
+	indent: usize,
+}
+
+struct FormatCurly
+{
+	location: usize,
+	indent: usize,
+}
+
+trait FormatCoordinator
+{
+	fn format_coordinates(&self) -> FormatNodeCoordinates;
+}
+
+impl FormatCoordinator for Node<'_>
+{
+	fn format_coordinates(&self) -> FormatNodeCoordinates
+	{
+		return FormatNodeCoordinates { start_byte: self.start_byte(), kind: self.kind().to_string() };
 	}
 }
 
