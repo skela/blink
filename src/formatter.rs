@@ -534,7 +534,8 @@ impl Formatter
 
 use tree_sitter::{Language, Node, Parser};
 
-extern "C" {
+extern "C"
+{
 	fn tree_sitter_dart() -> Language;
 }
 
@@ -643,6 +644,9 @@ enum Animal{
 		let src = self.tree_sitter_sample();
 		self.analyze(&src);
 	}
+	
+	fn indent_symbol(&self) -> char { return '\t'; }
+	// fn indent_symbol(&self) -> char { return 'X'; }
 
 	pub(crate) fn tree_sitter_format(&self)
 	{
@@ -658,8 +662,7 @@ enum Animal{
 
 		let indents = self.locate_indents(&mut src, root_node, 0);
 
-		let indent_symbol = "\t";
-		// let indent_symbol = "X";
+		let indent_symbol = self.indent_symbol().to_string();
 
 		for indent in indents.iter().rev()
 		{
@@ -673,13 +676,22 @@ enum Animal{
 
 		for curly in curlies.iter().rev()
 		{
-			src.insert(curly.location, '\n');
-			// for i in 0..curly.indent
-			// {
-			// 	src.insert(curly.location + i, '\t');
-			// }
+			if curly.inject_newline
+			{
+				src.insert(curly.location, '\n');
+				for i in 0..curly.indent
+				{
+					src.insert(curly.location + i + 1, self.indent_symbol());
+				}
+			}
+			else
+			{
+				if let Some(lstart) = src[..curly.location-1].rfind('\n')
+				{
+					src.replace_range(lstart+1..curly.location,self.indent_symbol().to_string().repeat(curly.indent).as_str());
+				}
+			}
 		}
-
 		println!("String is {}", src);
 	}
 
@@ -736,11 +748,53 @@ enum Animal{
 					let pstart = parent.start_byte;
 					let c = child.end_byte();
 					let sub = string.substring(pstart, c);
-					// println!("Sub for parent {} child {} is {} - {}:{}", parent.kind, child.kind(), sub, pstart, c);
 					if !sub.contains("\n")
 					{
-						// println!("Found curly on the same line as parent: {} column is {}", child.start_position().row, child.start_position().column);
-						curlies.push(FormatCurly { location: child.start_byte(), indent: level });
+						let mut indent : usize = 0;
+						if let Some(lstart) = string[..child.start_byte()].rfind('\n')
+						{
+							for char in string[lstart+1..child.start_byte()].chars()
+							{
+								if char == self.indent_symbol() { indent += 1; }
+								else { break; }
+							}
+						}
+						curlies.push(FormatCurly { location: child.start_byte(), indent, inject_newline: true });
+					}
+					else
+					{
+						let mut indent : usize = 0;
+						if let Some(lstart) = string[..pstart].rfind('\n')
+						{
+							let sub2 = string.substring(lstart+1,pstart);
+							if sub2.is_empty() { continue }
+							for char in sub2.chars()
+							{
+								if char == self.indent_symbol() { indent += 1; }
+								else { break; }
+							}
+							curlies.push(FormatCurly { location: child.start_byte(), indent, inject_newline: false });
+						}
+					}
+				}
+			}
+			if child.kind().eq("}")
+			{
+				if let Some(parent) = self.find_curly_parent_coordinates(child)
+				{
+					let pstart = parent.start_byte;
+
+					let mut indent : usize = 0;
+					if let Some(lstart) = string[..pstart].rfind('\n')
+					{
+						let sub = string.substring(lstart+1,pstart);
+						if sub.is_empty() { continue }
+						for char in sub.chars()
+						{
+							if char == self.indent_symbol() { indent += 1; }
+							else { break; }
+						}
+						curlies.push(FormatCurly { location: child.start_byte(), indent, inject_newline: false });
 					}
 				}
 			}
@@ -817,6 +871,7 @@ struct FormatCurly
 {
 	location: usize,
 	indent: usize,
+	inject_newline: bool
 }
 
 trait FormatCoordinator
