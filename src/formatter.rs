@@ -608,6 +608,7 @@ class DEF
 
 			Map<String,dynamic> dict = {
 				"testing":1,
+				"yay":true,
 			};
 
             void testingSwitchBreaks()
@@ -701,7 +702,13 @@ enum Animal{
 		{
 			return match p.kind()
 			{
-				"set_or_map_literal" => None,
+				"set_or_map_literal" =>
+				{
+					// if u want {} new lines leave this in
+					// return Some(p.format_coordinates())
+					if node.kind() == "}" { return Some(p.format_coordinates()) }
+					else { return None }
+				}
 				"switch_block" =>
 				{
 					if let Some(sw) = string[..p.start_byte()].rfind("switch")
@@ -821,8 +828,19 @@ enum Animal{
 	{
 		if let Some(p) = node.parent()
 		{
-			if p.kind() == "block" || p.kind() == "class_body" || p.kind() == "function_body" || p.kind() == "switch_block" { return self.indents_from_parent(p, indent); }
-			return self.indents_from_parent(p, indent + 1)
+			return match p.kind()
+			{
+				"block" => self.indents_from_parent(p, indent),
+				"class_body" => self.indents_from_parent(p, indent),
+				"function_body" => self.indents_from_parent(p, indent),
+				"switch_block" => self.indents_from_parent(p, indent),
+				"set_or_map_literal" => self.indents_from_parent(p, indent),
+				"initialized_identifier_list" => self.indents_from_parent(p, indent),
+				"initialized_identifier" => self.indents_from_parent(p, indent),
+				"declaration" => self.indents_from_parent(p, indent),
+				"pair" => self.indents_from_parent(p, indent),
+				_ => self.indents_from_parent(p, indent + 1),
+			}
 		}
 		return indent
 	}
@@ -841,6 +859,7 @@ enum Animal{
 			"switch_statement_case" => level - 3,
 			"break_statement" => level - 4,
 			"expression_statement" => self.indents_from_parent(node, 0),
+			"pair" => self.indents_from_parent(node, 0),
 			_ => level,
 		};
 	}
@@ -920,6 +939,20 @@ enum Animal{
 						let start = lstart + 1;
 						let end = cstart;
 						// println!("found break statement at {} - lstart {} - indent {}:\n{}", end, start, self.indent_from_level(child, level), string.substring(start, end + 11));
+						if start != end
+						{
+							indents.push(FormatIndent { start, end, indent: self.indent_from_level(child, level) });
+						}
+					}
+				}
+				"pair" =>
+				{
+					let cstart = child.start_byte();
+					if let Some(lstart) = string[..cstart].rfind('\n')
+					{
+						let start = lstart + 1;
+						let end = cstart;
+						println!("found pair statement at {} - lstart {} - indent {}:\n{}", end, start, self.indent_from_level(child, level), string.substring(start, end + 11));
 						if start != end
 						{
 							indents.push(FormatIndent { start, end, indent: self.indent_from_level(child, level) });
