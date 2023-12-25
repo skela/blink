@@ -627,7 +627,28 @@ class DEF
                     case Animal.Bird: print("This is a bird"); break;
                 }
             }
+
+  void testingIfs() {
+  final animal = Animal.Dog;
+  if (animal == Animal.Dog)
+  print("this is a dog");
+  else  
+  print("this is some other kind of animal");
+  }
+
+			void testingIfsWithCurlies(){
+		final animal = Animal.Dog;
+		if (animal == Animal.Dog){
+		print("this is a dog");
 		}
+		else if (animal == Animal.Cat) {
+		print("this is a cat");
+		}
+		else{
+	print("this is some other kind of animal");	
+			}
+		}
+				}
 
 enum Animal{
     Dog,
@@ -707,13 +728,13 @@ enum Animal{
 					// if u want {} new lines leave this in
 					// return Some(p.format_coordinates())
 					if node.kind() == "}" { return Some(p.format_coordinates()) }
-					else { return None }
+					return None
 				}
 				"switch_block" =>
 				{
 					if let Some(sw) = string[..p.start_byte()].rfind("switch")
 					{
-						return Some(FormatNodeCoordinates { start_byte: sw, kind: p.kind().to_string() });
+						return Some(FormatNodeCoordinates { start_byte: sw });
 					}
 					return None
 				}
@@ -743,6 +764,24 @@ enum Animal{
 						}
 						else if p2.kind() == "for_statement"
 						{
+							return Some(p2.format_coordinates())
+						}
+						else if p2.kind() == "if_statement"
+						{
+							if let Some(psib) = p.prev_sibling()
+							{
+								if psib.kind() == "else"
+								{
+									return Some(FormatNodeCoordinates { start_byte: psib.start_byte() });
+								}
+							}
+							if let Some(psib) = p2.prev_sibling()
+							{
+								if psib.kind() == "else"
+								{
+									return Some(FormatNodeCoordinates { start_byte: psib.start_byte() });
+								}
+							}
 							return Some(p2.format_coordinates())
 						}
 					}
@@ -839,6 +878,7 @@ enum Animal{
 				"initialized_identifier" => self.indents_from_parent(p, indent),
 				"declaration" => self.indents_from_parent(p, indent),
 				"pair" => self.indents_from_parent(p, indent),
+				"if_statement" => self.indents_from_parent(p, indent),
 				_ => self.indents_from_parent(p, indent + 1),
 			}
 		}
@@ -857,8 +897,22 @@ enum Animal{
 			"for_statement" => level - 2,
 			"switch_statement" => level - 2,
 			"switch_statement_case" => level - 3,
+			// "if_statement" => level - 2,
+			// "if" => level - 3,
+			// "else" => level - 3,
+			"if_statement" => self.indents_from_parent(node, 0),
+			"if" => self.indents_from_parent(node, 0),
+			"else" => self.indents_from_parent(node, 0),
 			"break_statement" => level - 4,
-			"expression_statement" => self.indents_from_parent(node, 0),
+			"expression_statement" =>
+			{
+				let indent = self.indents_from_parent(node, 0);
+				if node.parent_kind() == "if_statement" || node.grand_parent_kind() == "if_statement"
+				{
+					return indent + 1;
+				}
+				return indent;
+			}
 			"pair" => self.indents_from_parent(node, 0),
 			_ => level,
 		};
@@ -930,6 +984,23 @@ enum Animal{
 						}
 					}
 				}
+				"if" | "else" =>
+				{
+					let cstart = child.start_byte();
+					if let Some(lstart) = string[..cstart].rfind('\n')
+					{
+						let start = lstart + 1;
+						let mut end = cstart;
+						if let Some(t) = string[..cstart].rfind("else")
+						{
+							if t > start { end = t; }
+						}
+						if start != end
+						{
+							indents.push(FormatIndent { start, end, indent: self.indent_from_level(child, level) });
+						}
+					}
+				}
 				"break_statement" | "expression_statement" =>
 				{
 					let cstart = child.start_byte();
@@ -952,7 +1023,7 @@ enum Animal{
 					{
 						let start = lstart + 1;
 						let end = cstart;
-						println!("found pair statement at {} - lstart {} - indent {}:\n{}", end, start, self.indent_from_level(child, level), string.substring(start, end + 11));
+						// println!("found pair statement at {} - lstart {} - indent {}:\n{}", end, start, self.indent_from_level(child, level), string.substring(start, end + 11));
 						if start != end
 						{
 							indents.push(FormatIndent { start, end, indent: self.indent_from_level(child, level) });
@@ -1000,13 +1071,15 @@ trait FormatCoordinator
 {
 	fn format_coordinates(&self) -> FormatNodeCoordinates;
 	fn parent_kind(&self) -> &str;
+	fn grand_parent_kind(&self) -> &str;
+	fn line(&self,string:&mut String) -> String;
 }
 
 impl FormatCoordinator for Node<'_>
 {
 	fn format_coordinates(&self) -> FormatNodeCoordinates
 	{
-		return FormatNodeCoordinates { start_byte: self.start_byte(), kind: self.kind().to_string() };
+		return FormatNodeCoordinates { start_byte: self.start_byte() };
 	}
 
 	fn parent_kind(&self) -> &str
@@ -1017,10 +1090,33 @@ impl FormatCoordinator for Node<'_>
 		}
 		return "";
 	}
+	
+	fn grand_parent_kind(&self) -> &str
+	{
+		if let Some(p) = self.parent()
+		{
+			if let Some(gp) = p.parent()
+			{
+				return gp.kind();
+			}
+		}
+		return "";
+	}
+
+	fn line(&self,string:&mut String) -> String
+	{
+		if let Some(left) = string[..self.start_byte()].rfind('\n')
+		{
+			if let Some(right) = string[self.start_byte()..].find('\n')
+			{
+				return string.substring(left,right).to_string();
+			}
+		}
+		return "".to_string();
+	}
 }
 
 struct FormatNodeCoordinates
 {
 	start_byte: usize,
-	kind: String,
 }
