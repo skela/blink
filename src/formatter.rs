@@ -816,6 +816,16 @@ enum Animal{
 		}
 		return curlies;
 	}
+	
+	fn indents_from_parent(&self,node:Node,indent:usize) -> usize
+	{
+		if let Some(p) = node.parent()
+		{
+			if p.kind() == "block" || p.kind() == "class_body" || p.kind() == "function_body" || p.kind() == "switch_block" { return self.indents_from_parent(p, indent); }
+			return self.indents_from_parent(p, indent + 1)
+		}
+		return indent
+	}
 
 	fn indent_from_level(&self, node: Node, level: usize) -> usize
 	{
@@ -830,12 +840,7 @@ enum Animal{
 			"switch_statement" => level - 2,
 			"switch_statement_case" => level - 3,
 			"break_statement" => level - 4,
-			"expression_statement" => 
-			{
-				if node.parent_kind() == "switch_statement_case" { return level - 3 }
-				else if node.parent_kind() == "block" { return level - 4 }
-				return level - 3
-			}
+			"expression_statement" => self.indents_from_parent(node, 0),
 			_ => level,
 		};
 	}
