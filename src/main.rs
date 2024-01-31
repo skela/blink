@@ -7,6 +7,7 @@ use clap::Parser;
 
 mod config;
 mod formatter;
+mod treesitter;
 
 fn main()
 {
@@ -96,6 +97,7 @@ fn format_file_or_files_in_folder(config: config::Config, path: &PathBuf, output
 							let entry_path = entry.path();
 							if entry_path.is_dir()
 							{
+								println!("path {}", entry_path.display());
 								if let Some(ref o) = output
 								{
 									if let Some(entry_file_name) = entry_path.file_name()
