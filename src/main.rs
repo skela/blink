@@ -1,12 +1,15 @@
 use std::{
+	collections::HashSet,
 	io::{self, Write},
 	path::PathBuf,
 };
 
 use clap::Parser;
+use ignores::load_ignores;
 
 mod config;
 mod formatter;
+mod ignores;
 mod treesitter;
 
 fn main()
@@ -37,7 +40,7 @@ fn main()
 	}
 	else
 	{
-		format_file_or_files_in_folder(config, &args.path, args.output);
+		format_files(config, &args.path, args.output);
 	}
 }
 
@@ -79,7 +82,13 @@ fn format_standard_input(config: config::Config)
 	}
 }
 
-fn format_file_or_files_in_folder(config: config::Config, path: &PathBuf, output: Option<PathBuf>)
+fn format_files(config: config::Config, path: &PathBuf, output: Option<PathBuf>)
+{
+	let ignores = load_ignores(path);
+	format_file_or_files_in_folder(config, &ignores, path, output)
+}
+
+fn format_file_or_files_in_folder(config: config::Config, ignores: &HashSet<PathBuf>, path: &PathBuf, output: Option<PathBuf>)
 {
 	if path.is_dir()
 	{
@@ -95,14 +104,17 @@ fn format_file_or_files_in_folder(config: config::Config, path: &PathBuf, output
 						Ok(entry) =>
 						{
 							let entry_path = entry.path();
+							if ignores.contains(&entry_path)
+							{
+								continue;
+							}
 							if entry_path.is_dir()
 							{
-								println!("path {}", entry_path.display());
 								if let Some(ref o) = output
 								{
 									if let Some(entry_file_name) = entry_path.file_name()
 									{
-										format_file_or_files_in_folder(config, &entry_path, Some(o.join(entry_file_name)));
+										format_file_or_files_in_folder(config, ignores, &entry_path, Some(o.join(entry_file_name)));
 									}
 									else
 									{
@@ -111,7 +123,7 @@ fn format_file_or_files_in_folder(config: config::Config, path: &PathBuf, output
 								}
 								else
 								{
-									format_file_or_files_in_folder(config, &entry_path, output.to_owned());
+									format_file_or_files_in_folder(config, ignores, &entry_path, output.to_owned());
 								}
 							}
 							else
@@ -134,6 +146,10 @@ fn format_file_or_files_in_folder(config: config::Config, path: &PathBuf, output
 	}
 	else
 	{
+		if ignores.contains(path)
+		{
+			return;
+		}
 		format_file(config, &path, output.to_owned());
 	}
 }
