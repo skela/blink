@@ -104,10 +104,6 @@ fn format_file_or_files_in_folder(config: config::Config, ignores: &HashSet<Path
 						Ok(entry) =>
 						{
 							let entry_path = entry.path();
-							if ignores.contains(&entry_path)
-							{
-								continue;
-							}
 							if entry_path.is_dir()
 							{
 								if let Some(ref o) = output
@@ -128,7 +124,7 @@ fn format_file_or_files_in_folder(config: config::Config, ignores: &HashSet<Path
 							}
 							else
 							{
-								format_file(config, &entry_path, output.to_owned());
+								format_file(config, &entry_path, ignores, output.to_owned());
 							}
 						}
 						Err(err) =>
@@ -146,30 +142,26 @@ fn format_file_or_files_in_folder(config: config::Config, ignores: &HashSet<Path
 	}
 	else
 	{
-		if ignores.contains(path)
-		{
-			return;
-		}
-		format_file(config, &path, output.to_owned());
+		format_file(config, &path, ignores, output.to_owned());
 	}
 }
 
-fn format_file(config: config::Config, path: &PathBuf, output_folder: Option<PathBuf>)
+fn format_file(config: config::Config, path: &PathBuf, ignores: &HashSet<PathBuf>, output_folder: Option<PathBuf>)
 {
 	let output = output_folder.unwrap_or(path.to_path_buf());
 	if output.is_dir()
 	{
-		format_file_in_folder(config, path, &output);
+		format_file_in_folder(config, path, ignores, &output);
 	}
 	else
 	{
 		let parent = output.parent().unwrap().to_path_buf();
 
-		format_file_in_folder(config, path, &parent);
+		format_file_in_folder(config, path, ignores, &parent);
 	}
 }
 
-fn format_file_in_folder(config: config::Config, path: &PathBuf, output_folder: &PathBuf)
+fn format_file_in_folder(config: config::Config, path: &PathBuf, ignores: &HashSet<PathBuf>, output_folder: &PathBuf)
 {
 	if path.extension().unwrap_or(std::ffi::OsStr::new("")) != "dart"
 	{
@@ -195,6 +187,12 @@ fn format_file_in_folder(config: config::Config, path: &PathBuf, output_folder: 
 			let result = formatter.format(content);
 
 			let fixed_path = output_folder.join(path.file_name().unwrap());
+
+			if ignores.contains(path)
+			{
+				let _ = std::fs::copy(path, fixed_path);
+				return;
+			}
 
 			if config.dryrun
 			{
