@@ -17,7 +17,7 @@ pub(crate) fn load_ignores(path: &PathBuf) -> HashSet<PathBuf>
 			{
 				if let Ok(line) = res
 				{
-					files.insert(PathBuf::from(line));
+					files.insert(PathBuf::from(line.trim_end()));
 				}
 			}
 		}
@@ -27,27 +27,29 @@ pub(crate) fn load_ignores(path: &PathBuf) -> HashSet<PathBuf>
 
 fn find_blinkignore(starting_path: &Path) -> Option<PathBuf>
 {
-	let mut current_path = starting_path.to_path_buf();
-
-	while current_path.as_os_str().len() > 0
+	if let Ok(start) = fs::canonicalize(starting_path)
 	{
-		let blinkignore_path = current_path.join(".blinkignore");
-		if fs::metadata(&blinkignore_path).is_ok()
-		{
-			return Some(blinkignore_path);
-		}
+		let mut current_path = start.to_path_buf();
 
-		let git_path = current_path.join(".git");
-		if git_path.is_dir()
+		while current_path.as_os_str().len() > 0
 		{
-			println!("Found .git directory at: {:?}", git_path);
-			return None;
-		}
+			let blinkignore_path = current_path.join(".blinkignore");
+			if fs::metadata(&blinkignore_path).is_ok()
+			{
+				return Some(blinkignore_path);
+			}
 
-		match current_path.parent()
-		{
-			Some(parent) => current_path = parent.to_path_buf(),
-			None => return None, // If no parent, we're at the root
+			let git_path = current_path.join(".git");
+			if git_path.is_dir()
+			{
+				return None;
+			}
+
+			match current_path.parent()
+			{
+				Some(parent) => current_path = parent.to_path_buf(),
+				None => return None,
+			}
 		}
 	}
 
