@@ -168,6 +168,41 @@ class TestClass extends TestSuperClass
 		}
 	}
 
+	void switchWithinSwitch()
+	{
+		switch(animal){
+			case Animal.Cat: 
+				switch(animal){
+					case Animal.Cat: 
+					break;
+					case Animal.Dog:
+					break;
+					case Animal.Gerbil:
+					break;
+				}
+			break;
+			case Animal.Dog: 
+				switch(animal){
+					case Animal.Cat: break;
+					case Animal.Dog: break;
+					case Animal.Gerbil: break;
+				}
+			break;
+			case Animal.Gerbil: 
+				switch(animal){
+					case Animal.Cat: 
+						break;
+					case Animal.Dog: 
+						break;
+					case Animal.Gerbil:
+					{
+						}
+						break;
+				}
+			break;
+		}
+	}
+
 	Future<int> commentedOut() async
 	{
 		// var comment = await getComment();
