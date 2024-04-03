@@ -1,7 +1,7 @@
 use ec4rs::property::IndentStyle;
 use std::{fmt, path::Path};
 
-pub(crate) fn load(verbose: bool, dryrun: bool, path: &Path) -> Config
+pub(crate) fn load(verbose: bool, dryrun: bool, use_treesitter_to_format: bool, path: &Path) -> Config
 {
 	fn load_properties_at_file_path(file_path: &Path) -> Option<ec4rs::Properties>
 	{
@@ -42,7 +42,7 @@ pub(crate) fn load(verbose: bool, dryrun: bool, path: &Path) -> Config
 		}
 	}
 
-	let default_config = Config { verbose, dryrun, indentation: Indentation { style: IndentationStyle::Tabs, size: 2 }, curly_brace_on_next_line: true, prefer_double_quotes: true };
+	let default_config = Config { verbose, dryrun, use_treesitter_to_format, indentation: Indentation { style: IndentationStyle::Tabs, size: 2 }, curly_brace_on_next_line: true, prefer_double_quotes: true };
 
 	let res = load_properties(path);
 
@@ -55,7 +55,7 @@ pub(crate) fn load(verbose: bool, dryrun: bool, path: &Path) -> Config
 			let curly_brace_on_next_line = cfg.get_raw_for_key("curly_brace_on_next_line").into_str().parse::<bool>().unwrap_or(default_config.curly_brace_on_next_line);
 			let prefer_double_quotes = cfg.get_raw_for_key("prefer_double_quotes").into_str().parse::<bool>().unwrap_or(default_config.prefer_double_quotes);
 
-			return Config { verbose, dryrun, indentation: load_indentation(indent_style, indent_size), curly_brace_on_next_line, prefer_double_quotes };
+			return Config { verbose, dryrun, use_treesitter_to_format, indentation: load_indentation(indent_style, indent_size), curly_brace_on_next_line, prefer_double_quotes };
 		}
 
 		None =>
@@ -85,6 +85,7 @@ pub(crate) struct Config
 {
 	pub(crate) verbose: bool,
 	pub(crate) dryrun: bool,
+	pub(crate) use_treesitter_to_format: bool,
 
 	pub(crate) indentation: Indentation,
 	pub(crate) curly_brace_on_next_line: bool,
@@ -131,4 +132,3 @@ impl Config
 		return s;
 	}
 }
-

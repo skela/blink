@@ -91,6 +91,11 @@ impl Formatter
 		let cleaned_content3 = self.correct_switch_break_indentations(&cleaned_content2);
 		let cleaned_content4 = self.correct_weird_elses(&cleaned_content3);
 
+		if self.config.use_treesitter_to_format
+		{
+			return FormatterResult { content: self.format_using_treesitter(cleaned_content4), incorrect_curly_braces, incorrect_indentations, incorrect_quotes, incorrect_else_placements, incorrect_break_placements };
+		}
+
 		return FormatterResult { content: cleaned_content4, incorrect_curly_braces, incorrect_indentations, incorrect_quotes, incorrect_else_placements, incorrect_break_placements };
 	}
 

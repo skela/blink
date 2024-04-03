@@ -142,9 +142,9 @@ enum Animal{
 		return '\t';
 	}
 
-	pub(crate) fn tree_sitter_format(&self)
+	pub(crate) fn format_using_treesitter(&self, code: String) -> String
 	{
-		let mut src = self.tree_sitter_sample();
+		let mut src = String::from(code);
 
 		let mut parser = Parser::new();
 
@@ -186,6 +186,14 @@ enum Animal{
 				}
 			}
 		}
+
+		return src;
+	}
+
+	pub(crate) fn tree_sitter_format(&self)
+	{
+		let src = self.format_using_treesitter(self.tree_sitter_sample());
+
 		println!("String is {}", src);
 	}
 

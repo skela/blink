@@ -15,7 +15,7 @@ mod treesitter;
 fn main()
 {
 	let args = Arguments::parse();
-	let config = config::load(args.verbose, args.dry_run, &args.path.as_path());
+	let config = config::load(args.verbose, args.dry_run, args.use_treesitter_to_format, &args.path.as_path());
 
 	if args.check_config
 	{
@@ -240,15 +240,19 @@ struct Arguments
 	dry_run: bool,
 
 	#[clap(short = 's', long = "standard-input")]
-	/// Output to the terminal only, don't make any changes
+	/// Standard input instead of path
 	standard_input: bool,
 
+	#[clap(short = 'n', long = "use-treesitter")]
+	/// Use new tree sitter formatter
+	use_treesitter_to_format: bool,
+
 	#[clap(short = 'a', long = "tree-sitter-analyze")]
-	/// Output to the terminal only, don't make any changes
+	/// Test tree sitter analysis
 	tree_sitter_analyze: bool,
 
 	#[clap(short = 't', long = "tree-sitter-format")]
-	/// Output to the terminal only, don't make any changes
+	/// Test tree sitter formatting
 	tree_sitter_format: bool,
 
 	#[clap(short = 'c', long = "check-config")]
