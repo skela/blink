@@ -7,6 +7,9 @@ build:
 run: build
 	target/release/blink samples/ --output results/
 
+run_new: build
+	target/release/blink samples/ --output results/ -n
+
 all:
 	docker build --platform darwin/arm64 . -t blink-macos-arm64
 	docker build --platform linux/amd64 . -t blink-linux-amd64
