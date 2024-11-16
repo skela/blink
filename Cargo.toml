@@ -3,7 +3,8 @@ name = "blink"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[target.aarch64-apple-darwin]
+LIBRARY_PATH="/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib" 
 
 [dependencies]
 clap = { version = "3.0", features = ["derive"] }
