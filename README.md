@@ -4,11 +4,11 @@ Goal is to build a simple replacement to the absolutely bonkers and utter crazy 
 
 We may not need or even want to do all the crazy things the dartfm does, but here's some goals that I would like to achieve with this project:
 
-* Write it in Rust, because Rust is awesome.
-* Make use of editorconfig files, most sensible projects have them defined (or should).
-* Fix up incorrectly placed curly braces (if editorconfig has curly_brace_on_next_line=true)
-* Fix up incorrect indentation (if editorconfig has indent_style = tab)
-* Fix up incorrect single quote usage (if editorconfig has prefer_double_quotes=true)
+- Write it in Rust, because Rust is awesome.
+- Make use of editorconfig files, most sensible projects have them defined (or should).
+- Fix up incorrectly placed curly braces (if editorconfig has curly_brace_on_next_line=true)
+- Fix up incorrect indentation (if editorconfig has indent_style = tab)
+- Fix up incorrect single quote usage (if editorconfig has prefer_double_quotes=true)
 
 Sample of .editorconfig that can be used:
 
@@ -26,12 +26,3 @@ You will need to install rust in order to build this project.
 For Linux (Arch): `yay install rust`
 
 For macOS: `brew install rust`
-
-# Treesitter branch
-- `git clone git@github.com:UserNobody14/tree-sitter-dart.git`
-
-rustfmt is super flaky, and you cannot disable it seems, because if u do, nvim completely ignores editorconfig rules for indentation,
-so have no choice but to enable the formatter, luckily there are some rules regarding the placement of the curly, that only take effect
-when running a nightly, instructions on how to do that here:
-
-https://stackoverflow.com/questions/73455965/why-do-i-get-unstable-features-are-only-available-in-nightly-channel-when-runn
