@@ -10,7 +10,6 @@ LIBRARY_PATH="/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib"
 #build = "build.rs"
 #include = ["tree-sitter-dart/src"]
 # rustc-link-lib="tree_sitter_dart"
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 clap = { version = "3.0", features = ["derive"] }

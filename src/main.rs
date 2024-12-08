@@ -10,12 +10,13 @@ use ignores::load_ignores;
 mod config;
 mod formatter;
 mod ignores;
-mod treesitter;
+// mod treesitter;
 
 fn main()
 {
 	let args = Arguments::parse();
-	let config = config::load(args.verbose, args.dry_run, args.use_treesitter_to_format, &args.path.as_path());
+	let config = config::load(args.verbose, args.dry_run, &args.path.as_path());
+	// let config = config::load(args.verbose, args.dry_run, args.use_treesitter_to_format, &args.path.as_path());
 
 	if args.check_config
 	{
@@ -28,16 +29,16 @@ fn main()
 	{
 		format_standard_input(config);
 	}
-	else if args.tree_sitter_format
-	{
-		let formatter = formatter::Formatter { config };
-		formatter.tree_sitter_format();
-	}
-	else if args.tree_sitter_analyze
-	{
-		let formatter = formatter::Formatter { config };
-		formatter.tree_sitter_analyze();
-	}
+	// else if args.tree_sitter_format
+	// {
+	// 	let formatter = formatter::Formatter { config };
+	// 	formatter.tree_sitter_format();
+	// }
+	// else if args.tree_sitter_analyze
+	// {
+	// 	let formatter = formatter::Formatter { config };
+	// 	formatter.tree_sitter_analyze();
+	// }
 	else
 	{
 		format_files(config, &args.path, args.output);
@@ -243,17 +244,17 @@ struct Arguments
 	/// Standard input instead of path
 	standard_input: bool,
 
-	#[clap(short = 'n', long = "use-treesitter")]
+	// #[clap(short = 'n', long = "use-treesitter")]
 	/// Use new tree sitter formatter
-	use_treesitter_to_format: bool,
+	// use_treesitter_to_format: bool,
 
-	#[clap(short = 'a', long = "tree-sitter-analyze")]
+	// #[clap(short = 'a', long = "tree-sitter-analyze")]
 	/// Test tree sitter analysis
-	tree_sitter_analyze: bool,
+	// tree_sitter_analyze: bool,
 
-	#[clap(short = 't', long = "tree-sitter-format")]
+	// #[clap(short = 't', long = "tree-sitter-format")]
 	/// Test tree sitter formatting
-	tree_sitter_format: bool,
+	// tree_sitter_format: bool,
 
 	#[clap(short = 'c', long = "check-config")]
 	/// Check the config, don't make any changes
