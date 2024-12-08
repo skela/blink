@@ -20,6 +20,9 @@ class TestClass extends TestSuperClass
 {
 	int test = 0;
 	Animal animal = Animal.Gerbil;
+	CatRace cat = CatRace.Meow2;
+	DogRace dog = DogRace.Woof3;
+	GerbilRace gerbil = GerbilRace.Gerb1;
 
 	String whatever1 =
 	"""asd
@@ -176,32 +179,32 @@ class TestClass extends TestSuperClass
 		switch(animal)
 		{
 			case Animal.Cat:
-				switch(animal)
+				switch(cat)
 				{
-					case Animal.Cat:
-			break;
-					case Animal.Dog:
+					case CatRace.Meow1:
 					break;
-					case Animal.Gerbil:
+					case CatRace.Meow2:
+					break;
+					case CatRace.Meow3:
 					break;
 				}
 			break;
 			case Animal.Dog:
-				switch(animal)
+				switch(dog)
 				{
-					case Animal.Cat: break;
-					case Animal.Dog: break;
-					case Animal.Gerbil: break;
+					case DogRace.Woof1: break;
+					case DogRace.Woof2: break;
+					case DogRace.Woof3: break;
 				}
 			break;
 			case Animal.Gerbil:
-				switch(animal)
+				switch(gerbil)
 				{
-					case Animal.Cat:
-			break;
-					case Animal.Dog:
+					case GerbilRace.Gerb1:
 					break;
-					case Animal.Gerbil:
+					case GerbilRace.Gerb2:
+					break;
+					case GerbilRace.Gerb3:
 					{
 						}
 					break;
@@ -229,4 +232,25 @@ enum Animal
 	Cat,
 	Dog,
 	Gerbil,
+}
+
+enum CatRace
+{
+	Meow1,
+	Meow2,
+	Meow3,
+}
+
+enum DogRace
+{
+	Woof1,
+	Woof2,
+	Woof3,
+}
+
+enum GerbilRace
+{
+	Gerb1,
+	Gerb2,
+	Gerb3,
 }

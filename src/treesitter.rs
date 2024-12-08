@@ -163,29 +163,29 @@ enum Animal{
 			src.replace_range(indent.start..indent.end, indent_symbol.repeat(indent.indent).as_str());
 		}
 
-		tree = parser.parse(&src, None).unwrap();
-		root_node = tree.root_node();
+		// tree = parser.parse(&src, None).unwrap();
+		// root_node = tree.root_node();
 
-		let curlies = self.locate_curlies(&mut src, root_node, 0);
-
-		for curly in curlies.iter().rev()
-		{
-			if curly.inject_newline
-			{
-				src.insert(curly.location, '\n');
-				for i in 0..curly.indent
-				{
-					src.insert(curly.location + i + 1, self.indent_symbol());
-				}
-			}
-			else
-			{
-				if let Some(lstart) = src[..curly.location - 1].rfind('\n')
-				{
-					src.replace_range(lstart + 1..curly.location, self.indent_symbol().to_string().repeat(curly.indent).as_str());
-				}
-			}
-		}
+		// let curlies = self.locate_curlies(&mut src, root_node, 0);
+		//
+		// for curly in curlies.iter().rev()
+		// {
+		// 	if curly.inject_newline
+		// 	{
+		// 		src.insert(curly.location, '\n');
+		// 		for i in 0..curly.indent
+		// 		{
+		// 			src.insert(curly.location + i + 1, self.indent_symbol());
+		// 		}
+		// 	}
+		// 	else
+		// 	{
+		// 		if let Some(lstart) = src[..curly.location - 1].rfind('\n')
+		// 		{
+		// 			src.replace_range(lstart + 1..curly.location, self.indent_symbol().to_string().repeat(curly.indent).as_str());
+		// 		}
+		// 	}
+		// }
 
 		return src;
 	}

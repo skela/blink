@@ -7,6 +7,9 @@ build:
 run: build
 	target/release/blink samples/ --output results/
 
+run_1: build
+	target/release/blink samples/test1.dart --output results/
+
 run_new: build
 	target/release/blink samples/ --output results/ -n
 

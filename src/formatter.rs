@@ -1,6 +1,7 @@
-use substring::Substring;
-
 use crate::config::{self, IndentationStyle};
+use regex::Regex;
+use std::collections::HashMap;
+use substring::Substring;
 
 pub(crate) struct Formatter
 {
@@ -20,6 +21,13 @@ pub(crate) struct FormatterResult
 struct IncorrectSwitchBreakIndentation
 {
 	line: i32,
+	indent: String,
+}
+
+struct SwitchLines
+{
+	start_line: i32,
+	end_line: i32,
 	indent: String,
 }
 
@@ -319,8 +327,15 @@ impl Formatter
 		let mut line_number = 0;
 
 		let mut last_case_line = -1;
-		let mut last_case_line_indent = "";
 
+		let mut switches: Vec<SwitchLines> = Vec::new();
+		let switch_regex = Regex::new(r"^\s*switch\s*\(.*\)\s*\{?\s*$").unwrap();
+		let open_brace_regex = Regex::new(r"\{").unwrap();
+		let close_brace_regex = Regex::new(r"\}").unwrap();
+
+		let mut map: HashMap<i32, String> = HashMap::new();
+		let mut stack: Vec<i32> = Vec::new();
+		let mut braces: HashMap<i32, Vec<i32>> = HashMap::new();
 		for line in content.lines()
 		{
 			if forbidden_lines.contains(&line_number)
@@ -329,28 +344,95 @@ impl Formatter
 				continue;
 			}
 
-			if last_case_line == -1 && line.trim().contains("case ") && !line.contains(" break;") && !line.contains(" return;") && !line.contains(" return ")
+			if switch_regex.is_match(line)
 			{
-				last_case_line = line_number;
 				let delta = line.len() - line.trim_start().len();
-				last_case_line_indent = line.substring(0, delta);
+				let indent = line.substring(0, delta);
+				stack.push(line_number);
+				braces.insert(line_number, Vec::new());
+				map.insert(line_number, indent.to_string());
 			}
-			else
+
+			if !stack.is_empty()
 			{
-				if last_case_line != -1
+				if open_brace_regex.is_match(line) && close_brace_regex.is_match(line)
 				{
-					if line.trim().starts_with("break;")
+				}
+				else
+				{
+					if open_brace_regex.is_match(line)
 					{
-						wrong.push(IncorrectSwitchBreakIndentation { line: line_number, indent: String::from(last_case_line_indent) });
-						last_case_line = -1;
+						let mut stackb = braces.get_mut(stack.last().unwrap()).expect("Getting a braces stack for the switch block {");
+						stackb.push(line_number);
 					}
-					else if line.trim().starts_with("return;") || line.contains(" return;") || line.contains(" return ")
+
+					if close_brace_regex.is_match(line)
 					{
-						last_case_line = -1;
+						let mut stackb = braces.get_mut(stack.last().unwrap()).expect("Getting a braces stack for the switch block }");
+						stackb.pop();
+						if stackb.is_empty()
+						{
+							if let Some(start_line) = stack.pop()
+							{
+								let indent = map.get(&start_line).unwrap();
+								switches.push(SwitchLines { start_line, end_line: line_number, indent: indent.to_string() });
+							}
+						}
 					}
 				}
 			}
+			line_number += 1;
+		}
 
+		line_number = 0;
+		let mut active_switch: Option<usize> = None;
+		let mut active_switches: Vec<&SwitchLines> = Vec::new();
+		switches.sort_by_key(|switch| switch.start_line);
+		for line in content.lines()
+		{
+			if forbidden_lines.contains(&line_number)
+			{
+				line_number += 1;
+				continue;
+			}
+			if switch_regex.is_match(line)
+			{
+				if let Some(index) = active_switch
+				{
+					active_switch = Some(index + 1);
+				}
+				else
+				{
+					active_switch = Some(0);
+				}
+				if let Some(sw) = switches.get(active_switch.unwrap())
+				{
+					active_switches.push(sw);
+				}
+			}
+			else
+			{
+				if let Some(sw) = active_switches.last()
+				{
+					if line.trim().contains("case ") && !line.contains(" break;") && !line.contains(" return;") && !line.contains(" return ")
+					{
+					}
+					else
+					{
+						if line.trim().starts_with("break;")
+						{
+							wrong.push(IncorrectSwitchBreakIndentation { line: line_number, indent: sw.indent.to_string() + "\t" });
+						}
+						else if line.trim().starts_with("return;") || line.contains(" return;") || line.contains(" return ")
+						{
+						}
+					}
+					if sw.end_line == line_number
+					{
+						active_switches.pop();
+					}
+				}
+			}
 			line_number += 1;
 		}
 
