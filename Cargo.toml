@@ -1,12 +1,22 @@
 [package]
 name = "blink"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 
 [target.aarch64-apple-darwin]
 LIBRARY_PATH="/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib" 
 
+#links = "tree-sitter-dart"
+#build = "build.rs"
+#include = ["tree-sitter-dart/src"]
+# rustc-link-lib="tree_sitter_dart"
+
 [dependencies]
 clap = { version = "3.0", features = ["derive"] }
 ec4rs = { version = "1.0.1" }
 substring = { version = "1.4.5" }
+# tree-sitter = { version = "0.20.10" }
+regex = { version = "1.8" }
+
+[build-dependencies]
+cc = { version = "1.0.83" }
