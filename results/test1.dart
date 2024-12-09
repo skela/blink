@@ -213,6 +213,22 @@ class TestClass extends TestSuperClass
 		}
 	}
 
+	void breakInForLoopWithinSwitch()
+	{
+		switch(animal)
+		{
+			case Animal.Cat:
+				for (var i = 0; i<5; i++)
+					if (i == 2)
+			break; // TODO: This is incorrecly adjusted when it shouldnt be
+			break;
+			case Animal.Dog:
+			break;
+			case Animal.Gerbil:
+			break;
+		}
+	}
+
 	Future<int> commentedOut() async
 	{
 		// var comment = await getComment();
