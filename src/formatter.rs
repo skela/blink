@@ -326,7 +326,7 @@ impl Formatter
 
 		let mut line_number = 0;
 
-		let mut last_case_line = -1;
+		let last_case_line = -1;
 
 		let mut switches: Vec<SwitchLines> = Vec::new();
 		let switch_regex = Regex::new(r"^\s*switch\s*\(.*\)\s*\{?\s*$").unwrap();
@@ -362,13 +362,13 @@ impl Formatter
 				{
 					if open_brace_regex.is_match(line)
 					{
-						let mut stackb = braces.get_mut(stack.last().unwrap()).expect("Getting a braces stack for the switch block {");
+						let stackb = braces.get_mut(stack.last().unwrap()).expect("Getting a braces stack for the switch block {");
 						stackb.push(line_number);
 					}
 
 					if close_brace_regex.is_match(line)
 					{
-						let mut stackb = braces.get_mut(stack.last().unwrap()).expect("Getting a braces stack for the switch block }");
+						let stackb = braces.get_mut(stack.last().unwrap()).expect("Getting a braces stack for the switch block }");
 						stackb.pop();
 						if stackb.is_empty()
 						{
