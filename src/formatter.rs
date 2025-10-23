@@ -98,13 +98,15 @@ impl Formatter
 		let cleaned_content2 = self.remove_preceeding_empty_lines(&cleaned_content1);
 		let cleaned_content3 = self.correct_switch_break_indentations(&cleaned_content2);
 		let cleaned_content4 = self.correct_weird_elses(&cleaned_content3);
+		let cleaned_content5 = self.unfold_trailing_comma_calls(&cleaned_content4);
+		let cleaned_content6 = self.align_annotations(&cleaned_content5);
 
 		// if self.config.use_treesitter_to_format
 		// {
-		// 	return FormatterResult { content: self.format_using_treesitter(cleaned_content4), incorrect_curly_braces, incorrect_indentations, incorrect_quotes, incorrect_else_placements, incorrect_break_placements };
+		// 	return FormatterResult { content: self.format_using_treesitter(cleaned_content6), incorrect_curly_braces, incorrect_indentations, incorrect_quotes, incorrect_else_placements, incorrect_break_placements };
 		// }
 
-		return FormatterResult { content: cleaned_content4, incorrect_curly_braces, incorrect_indentations, incorrect_quotes, incorrect_else_placements, incorrect_break_placements };
+		return FormatterResult { content: cleaned_content6, incorrect_curly_braces, incorrect_indentations, incorrect_quotes, incorrect_else_placements, incorrect_break_placements };
 	}
 
 	fn forbidden_lines(&self, content: &String) -> Vec<i32>
@@ -472,6 +474,998 @@ impl Formatter
 		}
 
 		return cleaned_content;
+	}
+
+	fn indent_unit(&self) -> String
+	{
+		match self.config.indentation.style
+		{
+			IndentationStyle::Tabs => String::from("\t"),
+			IndentationStyle::Spaces => " ".repeat(self.config.indentation.size),
+		}
+	}
+
+	fn unfold_trailing_comma_calls(&self, content: &String) -> String
+	{
+		let forbidden_lines = self.forbidden_lines(&content);
+
+		let mut line_number: i32 = 0;
+		let mut cleaned_content = String::new();
+
+		let mut collecting_segment = false;
+		let mut segment_buffer = String::new();
+		let mut segment_balance = 0;
+
+		for line in content.lines()
+		{
+			if forbidden_lines.contains(&line_number)
+			{
+				if collecting_segment && !segment_buffer.is_empty()
+				{
+					cleaned_content.push_str(segment_buffer.as_str());
+					segment_buffer.clear();
+					collecting_segment = false;
+					segment_balance = 0;
+				}
+
+				cleaned_content.push_str(line);
+				cleaned_content.push('\n');
+				line_number += 1;
+				continue;
+			}
+
+			if collecting_segment
+			{
+				segment_buffer.push_str(line);
+				segment_buffer.push('\n');
+
+				let (delta, _) = self.paren_balance_delta(line);
+				segment_balance += delta;
+
+				if segment_balance <= 0
+				{
+					if let Some(unfolded) = self.unfold_trailing_comma_segment(segment_buffer.as_str())
+					{
+						cleaned_content.push_str(unfolded.as_str());
+					}
+					else
+					{
+						cleaned_content.push_str(segment_buffer.as_str());
+					}
+
+					segment_buffer.clear();
+					collecting_segment = false;
+					segment_balance = 0;
+				}
+			}
+			else
+			{
+				match self.unfold_trailing_comma_line(line)
+				{
+					Some(unfolded) =>
+					{
+						cleaned_content.push_str(unfolded.as_str());
+					}
+					None =>
+					{
+						let (delta, has_open) = self.paren_balance_delta(line);
+
+						if delta > 0 && has_open
+						{
+							collecting_segment = true;
+							segment_balance = delta;
+							segment_buffer.push_str(line);
+							segment_buffer.push('\n');
+						}
+						else
+						{
+							cleaned_content.push_str(line);
+							cleaned_content.push('\n');
+						}
+					}
+				}
+			}
+
+			line_number += 1;
+		}
+
+		if collecting_segment && !segment_buffer.is_empty()
+		{
+			if let Some(unfolded) = self.unfold_trailing_comma_segment(segment_buffer.as_str())
+			{
+				cleaned_content.push_str(unfolded.as_str());
+			}
+			else
+			{
+				cleaned_content.push_str(segment_buffer.as_str());
+			}
+		}
+
+		return cleaned_content;
+	}
+
+	fn align_annotations(&self, content: &String) -> String
+	{
+		let forbidden_lines = self.forbidden_lines(content);
+
+		let mut result = String::new();
+		let mut line_number: i32 = 0;
+
+		let lines: Vec<&str> = content.lines().collect();
+		let total_lines = lines.len();
+
+		while line_number < total_lines as i32
+		{
+			let line = lines[line_number as usize];
+
+			if forbidden_lines.contains(&line_number)
+			{
+				result.push_str(line);
+				result.push('\n');
+				line_number += 1;
+				continue;
+			}
+
+			if line.trim_start().starts_with('@')
+			{
+				if let Some(next_line) = lines.get((line_number + 1) as usize)
+				{
+					let indent: String = next_line.chars().take_while(|c| c.is_whitespace()).collect();
+					let mut target_indent = indent;
+
+					if target_indent.is_empty()
+					{
+						target_indent = line.chars().take_while(|c| c.is_whitespace()).collect();
+					}
+
+					result.push_str(target_indent.as_str());
+					result.push_str(line.trim_start());
+					result.push('\n');
+
+					line_number += 1;
+					continue;
+				}
+			}
+
+			result.push_str(line);
+			result.push('\n');
+			line_number += 1;
+		}
+
+		return result;
+	}
+
+	fn unfold_trailing_comma_line(&self, line: &str) -> Option<String>
+	{
+		if !line.contains('(') || !line.contains(')') || line.trim().is_empty()
+		{
+			return None;
+		}
+
+		let first_paren = line.find('(')?;
+		let chars: Vec<char> = line.chars().collect();
+
+		let closing_paren = self.find_matching_paren(&chars, first_paren)?;
+
+		let before_closing = &line[..closing_paren];
+
+		let leading_indent_len = line.chars().take_while(|c| c.is_whitespace()).count();
+		let leading_indent = &line[..leading_indent_len];
+		let before_args = &line[..first_paren];
+		let suffix = &line[closing_paren + 1..];
+		let args_section = &line[first_paren + 1..closing_paren];
+
+		let arguments = self.split_arguments(args_section);
+		if arguments.is_empty()
+		{
+			return None;
+		}
+
+		if !self.contains_trailing_comma(before_closing, &arguments)
+		{
+			return None;
+		}
+
+		let mut unfolded = String::new();
+		unfolded.push_str(before_args);
+		unfolded.push_str("(\n");
+
+		let mut param_indent = String::from(leading_indent);
+		param_indent.push_str(self.indent_unit().as_str());
+
+		for argument in arguments
+		{
+			let trimmed_argument = argument.trim();
+			if trimmed_argument.is_empty()
+			{
+				continue;
+			}
+
+			let formatted_lines = self.format_argument_lines(trimmed_argument);
+			let total_lines = formatted_lines.len();
+
+			for (index, formatted_line) in formatted_lines.iter().enumerate()
+			{
+				unfolded.push_str(param_indent.as_str());
+				unfolded.push_str(formatted_line);
+
+				if index == total_lines - 1
+				{
+					unfolded.push_str(",\n");
+				}
+				else
+				{
+					unfolded.push('\n');
+				}
+			}
+		}
+
+		unfolded.push_str(leading_indent);
+		unfolded.push(')');
+		unfolded.push_str(suffix);
+		unfolded.push('\n');
+
+		return Some(unfolded);
+	}
+
+	fn unfold_trailing_comma_segment(&self, segment: &str) -> Option<String>
+	{
+		let trimmed_segment = segment.trim_end_matches('\n');
+		let chars: Vec<char> = trimmed_segment.chars().collect();
+
+		let (open_index, close_index) = self.find_outermost_paren_indices(&chars)?;
+
+		let before_args = &trimmed_segment[..open_index];
+		let suffix = &trimmed_segment[close_index + 1..];
+		let args_section = &trimmed_segment[open_index + 1..close_index];
+
+		let arguments = self.split_arguments(args_section);
+		if arguments.is_empty()
+		{
+			return None;
+		}
+
+		if !self.contains_trailing_comma(&trimmed_segment[..close_index], &arguments)
+		{
+			return None;
+		}
+
+		let leading_indent_len = before_args.chars().take_while(|c| c.is_whitespace()).count();
+		let leading_indent = &before_args[..leading_indent_len];
+		let before_args_trimmed = before_args.trim_end();
+
+		let mut unfolded = String::new();
+		unfolded.push_str(before_args_trimmed);
+		unfolded.push_str("(\n");
+
+		let mut param_indent = String::from(leading_indent);
+		param_indent.push_str(self.indent_unit().as_str());
+
+		for argument in arguments
+		{
+			let trimmed_argument = argument.trim();
+			if trimmed_argument.is_empty()
+			{
+				continue;
+			}
+
+			let formatted_lines = self.format_argument_lines(trimmed_argument);
+			let total_lines = formatted_lines.len();
+
+			for (index, formatted_line) in formatted_lines.iter().enumerate()
+			{
+				unfolded.push_str(param_indent.as_str());
+				unfolded.push_str(formatted_line);
+
+				let has_trailing_comma = formatted_line.trim_end().ends_with(',');
+
+				if index == total_lines - 1 && !has_trailing_comma
+				{
+					unfolded.push(',');
+				}
+
+				unfolded.push('\n');
+			}
+		}
+
+		unfolded.push_str(leading_indent);
+		unfolded.push(')');
+		unfolded.push_str(suffix.trim_end_matches('\n'));
+		unfolded.push('\n');
+
+		return Some(unfolded);
+	}
+
+	fn find_matching_paren(&self, chars: &[char], start_index: usize) -> Option<usize>
+	{
+		let mut depth = 0;
+		let mut index = start_index;
+
+		while index < chars.len()
+		{
+			match chars[index]
+			{
+				'(' =>
+				{
+					depth += 1;
+				}
+				')' =>
+				{
+					if depth == 0
+					{
+						return None;
+					}
+
+					depth -= 1;
+					if depth == 0
+					{
+						return Some(index);
+					}
+				}
+				_ => {}
+			}
+			index += 1;
+		}
+
+		return None;
+	}
+
+	fn split_arguments(&self, args_section: &str) -> Vec<String>
+	{
+		let mut trimmed_chars: Vec<char> = args_section.trim().chars().collect();
+
+		while trimmed_chars.last().map(|c| c.is_whitespace()).unwrap_or(false)
+		{
+			trimmed_chars.pop();
+		}
+
+		if trimmed_chars.last() == Some(&',')
+		{
+			trimmed_chars.pop();
+		}
+
+		let core: String = trimmed_chars.into_iter().collect();
+
+		let core_chars: Vec<char> = core.chars().collect();
+		let mut arguments: Vec<String> = Vec::new();
+		let mut current = String::new();
+
+		let mut paren_depth = 0;
+		let mut brace_depth = 0;
+		let mut bracket_depth = 0;
+		let mut angle_depth = 0;
+		let mut in_single_quote = false;
+		let mut in_double_quote = false;
+		let mut prev_non_ws: Option<char> = None;
+
+		let len = core_chars.len();
+		let mut index = 0;
+
+		while index < len
+		{
+			let ch = core_chars[index];
+
+			if !in_single_quote && !in_double_quote
+			{
+				match ch
+				{
+					'(' => paren_depth += 1,
+					')' =>
+					{
+						if paren_depth > 0
+						{
+							paren_depth -= 1;
+						}
+					}
+					'{' => brace_depth += 1,
+					'}' =>
+					{
+						if brace_depth > 0
+						{
+							brace_depth -= 1;
+						}
+					}
+					'[' => bracket_depth += 1,
+					']' =>
+					{
+						if bracket_depth > 0
+						{
+							bracket_depth -= 1;
+						}
+					}
+					'<' =>
+					{
+						let next_non_ws = core_chars[index + 1..].iter().find(|c| !c.is_whitespace()).copied();
+						if prev_non_ws.map(|c| c.is_alphanumeric() || c == '>' || c == '?').unwrap_or(false)
+							&& next_non_ws.map(|c| c.is_alphanumeric() || c == '_' || c == '?' || c == '>').unwrap_or(false)
+						{
+							angle_depth += 1;
+						}
+					}
+					'>' =>
+					{
+						if angle_depth > 0
+						{
+							angle_depth -= 1;
+						}
+					}
+					_ => {}
+				}
+			}
+
+			match ch
+			{
+				'\'' =>
+				{
+					if !in_double_quote && !self.is_escaped(&core_chars, index)
+					{
+						in_single_quote = !in_single_quote;
+					}
+					current.push(ch);
+				}
+				'"' =>
+				{
+					if !in_single_quote && !self.is_escaped(&core_chars, index)
+					{
+						in_double_quote = !in_double_quote;
+					}
+					current.push(ch);
+				}
+				',' =>
+				{
+					if paren_depth == 0 && brace_depth == 0 && bracket_depth == 0 && angle_depth == 0 && !in_single_quote && !in_double_quote
+					{
+						arguments.push(current.trim().to_string());
+						current.clear();
+					}
+					else
+					{
+						current.push(ch);
+					}
+				}
+				_ =>
+				{
+					current.push(ch);
+				}
+			}
+
+			if !ch.is_whitespace()
+			{
+				prev_non_ws = Some(ch);
+			}
+
+			index += 1;
+		}
+
+		if !current.trim().is_empty()
+		{
+			arguments.push(current.trim().to_string());
+		}
+
+		return arguments;
+	}
+
+	fn format_argument_lines(&self, argument: &str) -> Vec<String>
+	{
+		if let Some(lines) = self.format_bracket_expression_lines(argument)
+		{
+			return lines;
+		}
+
+		if let Some(lines) = self.format_parenthesized_expression_lines(argument)
+		{
+			return lines;
+		}
+
+		return vec![argument.trim().to_string()];
+	}
+
+	fn format_bracket_expression_lines(&self, argument: &str) -> Option<Vec<String>>
+	{
+		let chars: Vec<char> = argument.chars().collect();
+		let (open_index, close_index) = self.find_top_level_bracket_indices(&chars)?;
+
+		let prefix = &argument[..open_index];
+		let suffix = argument[close_index + 1..].trim();
+		let items_section = &argument[open_index + 1..close_index];
+		let items_trimmed = items_section.trim();
+
+		if items_trimmed.is_empty() || !items_trimmed.ends_with(',')
+		{
+			return None;
+		}
+
+		let items = self.split_arguments(items_section);
+		if items.is_empty()
+		{
+			return None;
+		}
+
+		let indent_unit = self.indent_unit();
+
+		let mut lines: Vec<String> = Vec::new();
+
+		let mut first_line = String::from(prefix);
+		first_line.push('[');
+		lines.push(first_line);
+
+		for item in items
+		{
+			let trimmed_item = item.trim();
+			if trimmed_item.is_empty()
+			{
+				continue;
+			}
+
+			let nested_lines = self.format_argument_lines(trimmed_item);
+			let total_nested = nested_lines.len();
+
+			for (index, nested_line) in nested_lines.iter().enumerate()
+			{
+				let mut line = String::new();
+				line.push_str(indent_unit.as_str());
+				line.push_str(nested_line);
+
+				if index == total_nested - 1 && !nested_line.trim_end().ends_with(',')
+				{
+					line.push(',');
+				}
+
+				lines.push(line);
+			}
+		}
+
+		let mut closing = String::from("]");
+		if !suffix.is_empty()
+		{
+			closing.push_str(suffix);
+		}
+		lines.push(closing);
+
+		return Some(lines);
+	}
+
+	fn format_parenthesized_expression_lines(&self, argument: &str) -> Option<Vec<String>>
+	{
+		let chars: Vec<char> = argument.chars().collect();
+		let open_index = argument.find('(')?;
+		let close_index = self.find_matching_paren(&chars, open_index)?;
+
+		let before_closing = &argument[..close_index];
+		let items_section = &argument[open_index + 1..close_index];
+
+		let items = self.split_arguments(items_section);
+
+		if items.is_empty()
+		{
+			return None;
+		}
+
+		if !self.contains_trailing_comma(before_closing, &items)
+		{
+			return None;
+		}
+
+		let prefix = &argument[..open_index];
+		let suffix = argument[close_index + 1..].trim();
+
+		let indent_unit = self.indent_unit();
+
+		let mut lines: Vec<String> = Vec::new();
+
+		let mut first_line = String::from(prefix.trim_end());
+		first_line.push('(');
+		lines.push(first_line);
+
+		for item in items
+		{
+			let trimmed_item = item.trim();
+			if trimmed_item.is_empty()
+			{
+				continue;
+			}
+
+			let nested_lines = self.format_argument_lines(trimmed_item);
+			let total_nested = nested_lines.len();
+
+			for (index, nested_line) in nested_lines.iter().enumerate()
+			{
+				let mut line = String::new();
+				line.push_str(indent_unit.as_str());
+				line.push_str(nested_line);
+
+				if index == total_nested - 1 && !nested_line.trim_end().ends_with(',')
+				{
+					line.push(',');
+				}
+
+				lines.push(line);
+			}
+		}
+
+		let mut closing = String::from(")");
+		if !suffix.is_empty()
+		{
+			closing.push_str(suffix);
+		}
+		lines.push(closing);
+
+		return Some(lines);
+	}
+
+	fn find_top_level_bracket_indices(&self, chars: &[char]) -> Option<(usize, usize)>
+	{
+		let mut paren_depth = 0;
+		let mut brace_depth = 0;
+		let mut bracket_depth = 0;
+		let mut angle_depth = 0;
+		let mut in_single_quote = false;
+		let mut in_double_quote = false;
+		let mut prev_non_ws: Option<char> = None;
+
+		let mut open_index: Option<usize> = None;
+
+		let len = chars.len();
+		let mut index = 0;
+
+		while index < len
+		{
+			let ch = chars[index];
+
+			match ch
+			{
+				'\'' =>
+				{
+					if !in_double_quote && !self.is_escaped(chars, index)
+					{
+						in_single_quote = !in_single_quote;
+					}
+				}
+				'"' =>
+				{
+					if !in_single_quote && !self.is_escaped(chars, index)
+					{
+						in_double_quote = !in_double_quote;
+					}
+				}
+				_ => {}
+			}
+
+			if in_single_quote || in_double_quote
+			{
+				index += 1;
+				continue;
+			}
+
+			match ch
+			{
+				'(' => paren_depth += 1,
+				')' =>
+				{
+					if paren_depth > 0
+					{
+						paren_depth -= 1;
+					}
+				}
+				'{' => brace_depth += 1,
+				'}' =>
+				{
+					if brace_depth > 0
+					{
+						brace_depth -= 1;
+					}
+				}
+				'<' =>
+				{
+					let next_non_ws = chars[index + 1..].iter().find(|c| !c.is_whitespace()).copied();
+					if prev_non_ws.map(|c| c.is_alphanumeric() || c == '>' || c == '?').unwrap_or(false)
+						&& next_non_ws.map(|c| c.is_alphanumeric() || c == '_' || c == '?' || c == '>').unwrap_or(false)
+					{
+						angle_depth += 1;
+					}
+				}
+				'>' =>
+				{
+					if angle_depth > 0
+					{
+						angle_depth -= 1;
+					}
+				}
+				'[' =>
+				{
+					if paren_depth == 0 && brace_depth == 0 && angle_depth == 0 && bracket_depth == 0
+					{
+						open_index = Some(index);
+					}
+					bracket_depth += 1;
+				}
+				']' =>
+				{
+					if bracket_depth > 0
+					{
+						bracket_depth -= 1;
+						if bracket_depth == 0
+						{
+							if let Some(open) = open_index
+							{
+								return Some((open, index));
+							}
+						}
+					}
+				}
+				_ => {}
+			}
+
+			if !ch.is_whitespace()
+			{
+				prev_non_ws = Some(ch);
+			}
+
+			index += 1;
+		}
+
+		return None;
+	}
+
+	fn paren_balance_delta(&self, line: &str) -> (i32, bool)
+	{
+		let chars: Vec<char> = line.chars().collect();
+		let mut delta = 0;
+		let mut has_open = false;
+		let mut in_single_quote = false;
+		let mut in_double_quote = false;
+
+		for (index, ch) in chars.iter().enumerate()
+		{
+			match ch
+			{
+				'\'' =>
+				{
+					if !in_double_quote && !self.is_escaped(&chars, index)
+					{
+						in_single_quote = !in_single_quote;
+					}
+				}
+				'"' =>
+				{
+					if !in_single_quote && !self.is_escaped(&chars, index)
+					{
+						in_double_quote = !in_double_quote;
+					}
+				}
+				_ => {}
+			}
+
+			if in_single_quote || in_double_quote
+			{
+				continue;
+			}
+
+			match ch
+			{
+				'(' =>
+				{
+					delta += 1;
+					has_open = true;
+				}
+				')' =>
+				{
+					delta -= 1;
+				}
+				_ => {}
+			}
+		}
+
+		return (delta, has_open);
+	}
+
+	fn find_outermost_paren_indices(&self, chars: &[char]) -> Option<(usize, usize)>
+	{
+		let mut stack: Vec<usize> = Vec::new();
+		let mut pairs: Vec<(usize, usize)> = Vec::new();
+
+		let mut in_single_quote = false;
+		let mut in_double_quote = false;
+
+		for (index, ch) in chars.iter().enumerate()
+		{
+			match ch
+			{
+				'\'' =>
+				{
+					if !in_double_quote && !self.is_escaped(chars, index)
+					{
+						in_single_quote = !in_single_quote;
+					}
+				}
+				'"' =>
+				{
+					if !in_single_quote && !self.is_escaped(chars, index)
+					{
+						in_double_quote = !in_double_quote;
+					}
+				}
+				_ => {}
+			}
+
+			if in_single_quote || in_double_quote
+			{
+				continue;
+			}
+
+			match ch
+			{
+				'(' =>
+				{
+					stack.push(index);
+				}
+				')' =>
+				{
+					if let Some(open_index) = stack.pop()
+					{
+						pairs.push((open_index, index));
+					}
+				}
+				_ => {}
+			}
+		}
+
+		if pairs.is_empty()
+		{
+			return None;
+		}
+
+		return pairs.into_iter().max_by_key(|(_, close)| *close);
+	}
+
+	fn contains_trailing_comma(&self, before_closing: &str, arguments: &[String]) -> bool
+	{
+		if before_closing.trim_end().ends_with(',')
+		{
+			return true;
+		}
+
+		for argument in arguments
+		{
+			if self.expression_has_trailing_comma(argument)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	fn expression_has_trailing_comma(&self, argument: &str) -> bool
+	{
+		let chars: Vec<char> = argument.chars().collect();
+		let mut stack: Vec<char> = Vec::new();
+		let mut in_single_quote = false;
+		let mut in_double_quote = false;
+		let len = chars.len();
+		let mut index = 0;
+
+		while index < len
+		{
+			let ch = chars[index];
+
+			match ch
+			{
+				'\'' =>
+				{
+					if !in_double_quote && !self.is_escaped(&chars, index)
+					{
+						in_single_quote = !in_single_quote;
+					}
+				}
+				'"' =>
+				{
+					if !in_single_quote && !self.is_escaped(&chars, index)
+					{
+						in_double_quote = !in_double_quote;
+					}
+				}
+				_ => {}
+			}
+
+			if in_single_quote || in_double_quote
+			{
+				index += 1;
+				continue;
+			}
+
+			match ch
+			{
+				'(' | '[' | '{' =>
+				{
+					stack.push(ch);
+				}
+				')' =>
+				{
+					if let Some(open) = stack.pop()
+					{
+						if open == '(' && self.previous_non_whitespace_is_comma(&chars, index)
+						{
+							return true;
+						}
+					}
+				}
+				']' =>
+				{
+					if let Some(open) = stack.pop()
+					{
+						if open == '[' && self.previous_non_whitespace_is_comma(&chars, index)
+						{
+							return true;
+						}
+					}
+				}
+				'}' =>
+				{
+					if let Some(open) = stack.pop()
+					{
+						if open == '{' && self.previous_non_whitespace_is_comma(&chars, index)
+						{
+							return true;
+						}
+					}
+				}
+				_ => {}
+			}
+
+			index += 1;
+		}
+
+		return false;
+	}
+
+	fn previous_non_whitespace_is_comma(&self, chars: &[char], mut index: usize) -> bool
+	{
+		if index == 0
+		{
+			return false;
+		}
+
+		while index > 0
+		{
+			index -= 1;
+			let ch = chars[index];
+
+			if ch.is_whitespace()
+			{
+				continue;
+			}
+
+			return ch == ',';
+		}
+
+		return false;
+	}
+
+	fn is_escaped(&self, chars: &[char], index: usize) -> bool
+	{
+		if index == 0
+		{
+			return false;
+		}
+
+		let mut backslash_count = 0;
+		let mut idx = index;
+
+		while idx > 0
+		{
+			idx -= 1;
+			if chars[idx] == '\\'
+			{
+				backslash_count += 1;
+			}
+			else
+			{
+				break;
+			}
+		}
+
+		return backslash_count % 2 == 1;
 	}
 
 	fn fix_incorrect_curly_braces(&self, line: String) -> (String, bool)

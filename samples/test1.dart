@@ -106,6 +106,73 @@ class TestClass extends TestSuperClass
 		);
 	}
 
+	Widget inlineWidgetSingleLine()
+	{
+		return Column(children: [Text("One"), Text("Two")],);
+	}
+
+	Widget inlineWidgetCompact()
+	{
+		return Column(children: [Text("One"), Text("Two")]);
+	}
+
+	Widget inlineWidgetListTrailingComma()
+	{
+		return Column(children: [Text("One"), Text("Two"),]);
+	}
+
+	Widget nestedWidgetTree()
+	{
+		return SizedBox(
+			width: 100,
+			child: Container(
+				padding: const EdgeInsets.all(8),
+				child: Column(
+					mainAxisAlignment: MainAxisAlignment.center,
+					children: [
+						Row(children: [Icon(Icons.menu), Text("Menu"),],),
+						Row(children: [Icon(Icons.settings), Text("Settings")]),
+						Row(children: [Icon(Icons.logout), Text("Logout"),]),
+					],
+				),
+			),
+		);
+	}
+
+	Widget scaffoldWrapper(BuildContext context)
+	{
+		return Scaffold(appBar: PreferredSize(preferredSize: Size.fromHeight(0.0), child: HiddenAppBar(color: style.backgroundColor, brightness: style.brightness,),), backgroundColor: style.backgroundColor, body: SafeArea(child: body), bottomNavigationBar: banner,);
+	}
+
+@override
+	Widget build(BuildContext context) => Scaffold(
+		appBar: PreferredSize(
+			preferredSize: Size.fromHeight(0.0),
+			child: HiddenAppBar(color: style.backgroundColor,
+
+				brightness: style.brightness,
+			),
+		),
+		backgroundColor: style.backgroundColor,
+		body: SafeArea(child: body),
+		bottomNavigationBar: banner,
+	);
+
+	@override
+	Widget build123(BuildContext context) => Scaffold(
+		appBar: PreferredSize(
+			preferredSize: Size.fromHeight(0.0),
+			child: HiddenAppBar(
+				color: style.backgroundColor,
+
+				brightness: style.brightness,
+			),
+		),
+		backgroundColor: style.backgroundColor,
+		body: SafeArea(child: body),
+		bottomNavigationBar: banner,
+	);
+
 	void switches1()
 	{
 		switch(animal){
