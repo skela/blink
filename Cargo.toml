@@ -1,10 +1,10 @@
 [package]
 name = "blink"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2021"
 
 [target.aarch64-apple-darwin]
-LIBRARY_PATH="/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib" 
+LIBRARY_PATH="/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib"
 
 #links = "tree-sitter-dart"
 #build = "build.rs"
