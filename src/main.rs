@@ -173,6 +173,15 @@ fn format_file_in_folder(config: config::Config, path: &PathBuf, ignores: &HashS
 		return;
 	}
 
+	if path.to_string_lossy().ends_with("g.dart")
+	{
+		if config.verbose
+		{
+			println!("Skipping generated dart file - {}", path.display());
+		}
+		return;
+	}
+
 	if config.verbose
 	{
 		println!("Checking `{}`...", path.display());
