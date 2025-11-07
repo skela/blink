@@ -1,10 +1,10 @@
 [package]
 name = "blink"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 
 [target.aarch64-apple-darwin]
-LIBRARY_PATH="/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib" 
+LIBRARY_PATH="/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib"
 
 #links = "tree-sitter-dart"
 #build = "build.rs"
@@ -17,6 +17,7 @@ ec4rs = { version = "1.0.1" }
 substring = { version = "1.4.5" }
 # tree-sitter = { version = "0.20.10" }
 regex = { version = "1.8" }
+walkdir = "2"
 
 [build-dependencies]
 cc = { version = "1.0.83" }

@@ -164,6 +164,7 @@ fn format_file(config: config::Config, path: &PathBuf, ignores: &HashSet<PathBuf
 
 fn format_file_in_folder(config: config::Config, path: &PathBuf, ignores: &HashSet<PathBuf>, output_folder: &PathBuf)
 {
+	let canonical_path = std::fs::canonicalize(path).unwrap();
 	if path.extension().unwrap_or(std::ffi::OsStr::new("")) != "dart"
 	{
 		if config.verbose
@@ -178,6 +179,14 @@ fn format_file_in_folder(config: config::Config, path: &PathBuf, ignores: &HashS
 		if config.verbose
 		{
 			println!("Skipping generated dart file - {}", path.display());
+		}
+		return;
+	}
+	if ignores.contains(&canonical_path)
+	{
+		if config.verbose
+		{
+			println!("Skipping ignored file - {}", path.display());
 		}
 		return;
 	}
@@ -197,12 +206,6 @@ fn format_file_in_folder(config: config::Config, path: &PathBuf, ignores: &HashS
 			let result = formatter.format(content);
 
 			let fixed_path = output_folder.join(path.file_name().unwrap());
-
-			if ignores.contains(path)
-			{
-				let _ = std::fs::copy(path, fixed_path);
-				return;
-			}
 
 			if config.dryrun
 			{
@@ -235,6 +238,11 @@ fn format_file_in_folder(config: config::Config, path: &PathBuf, ignores: &HashS
 		}
 	}
 }
+
+
+
+
+
 
 #[derive(Parser)]
 #[clap(version, about, long_about = None)]

@@ -1,23 +1,34 @@
-use std::fs;
-use std::fs::File;
+use std::fs::{self, File};
 use std::io::{self, BufRead};
-use std::path::Path;
-use std::{collections::HashSet, path::PathBuf};
+use std::path::{Path, PathBuf};
+use std::collections::HashSet;
+use walkdir::WalkDir;
 
 pub(crate) fn load_ignores(path: &PathBuf) -> HashSet<PathBuf>
 {
 	let mut files: HashSet<PathBuf> = HashSet::new();
-	if let Some(blinkignore) = find_blinkignore(path)
+	if let Some(blinkignore_path) = find_blinkignore(path)
 	{
-		if let Ok(file) = File::open(&blinkignore)
+		if let Ok(file) = File::open(&blinkignore_path)
 		{
 			let reader = io::BufReader::new(file);
+			let blinkignore_dir = blinkignore_path.parent().unwrap_or(Path::new(""));
 
 			for res in reader.lines()
 			{
 				if let Ok(line) = res
 				{
-					files.insert(PathBuf::from(line.trim_end()));
+					let ignored_path = blinkignore_dir.join(line.trim_end());
+					if ignored_path.is_dir() {
+						for entry in WalkDir::new(ignored_path) {
+							let entry = entry.unwrap();
+							if entry.file_type().is_file() {
+								files.insert(entry.path().to_path_buf());
+							}
+						}
+					} else {
+						files.insert(ignored_path);
+					}
 				}
 			}
 		}
