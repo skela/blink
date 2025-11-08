@@ -239,11 +239,6 @@ fn format_file_in_folder(config: config::Config, path: &PathBuf, ignores: &HashS
 	}
 }
 
-
-
-
-
-
 #[derive(Parser)]
 #[clap(version, about, long_about = None)]
 /// A blazing fast code formatter for Dart

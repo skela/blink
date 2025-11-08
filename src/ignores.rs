@@ -1,7 +1,7 @@
+use std::collections::HashSet;
 use std::fs::{self, File};
 use std::io::{self, BufRead};
 use std::path::{Path, PathBuf};
-use std::collections::HashSet;
 use walkdir::WalkDir;
 
 pub(crate) fn load_ignores(path: &PathBuf) -> HashSet<PathBuf>
@@ -19,14 +19,19 @@ pub(crate) fn load_ignores(path: &PathBuf) -> HashSet<PathBuf>
 				if let Ok(line) = res
 				{
 					let ignored_path = blinkignore_dir.join(line.trim_end());
-					if ignored_path.is_dir() {
-						for entry in WalkDir::new(ignored_path) {
+					if ignored_path.is_dir()
+					{
+						for entry in WalkDir::new(ignored_path)
+						{
 							let entry = entry.unwrap();
-							if entry.file_type().is_file() {
+							if entry.file_type().is_file()
+							{
 								files.insert(entry.path().to_path_buf());
 							}
 						}
-					} else {
+					}
+					else
+					{
 						files.insert(ignored_path);
 					}
 				}
