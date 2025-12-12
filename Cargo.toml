@@ -1,6 +1,6 @@
 [package]
 name = "blink"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2021"
 
 [target.aarch64-apple-darwin]
