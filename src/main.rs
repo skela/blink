@@ -10,6 +10,7 @@ use ignores::load_ignores;
 mod config;
 mod formatter;
 mod ignores;
+mod trailing_comma;
 // mod treesitter;
 
 fn main()
@@ -212,7 +213,7 @@ fn format_file_in_folder(config: config::Config, path: &PathBuf, ignores: &HashS
 				println!("{}", result.content);
 
 				println!("Stats for {} (wrongs): ", path.display());
-				println!("  curlies: {} quotes: {} elses: {} indents: {} breaks: {}", result.incorrect_curly_braces, result.incorrect_quotes, result.incorrect_else_placements, result.incorrect_indentations, result.incorrect_break_placements);
+				println!("  curlies: {} quotes: {} elses: {} indents: {} breaks: {} trailing_commas: {}", result.incorrect_curly_braces, result.incorrect_quotes, result.incorrect_else_placements, result.incorrect_indentations, result.incorrect_break_placements, result.incorrect_trailing_comma_formats);
 			}
 			else
 			{

@@ -1,4 +1,5 @@
 use crate::config::{self, IndentationStyle};
+use crate::trailing_comma;
 use regex::Regex;
 use std::collections::HashMap;
 use substring::Substring;
@@ -16,6 +17,7 @@ pub(crate) struct FormatterResult
 	pub(crate) incorrect_quotes: i32,
 	pub(crate) incorrect_else_placements: i32,
 	pub(crate) incorrect_break_placements: i32,
+	pub(crate) incorrect_trailing_comma_formats: i32,
 }
 
 struct IncorrectSwitchBreakIndentation
@@ -99,12 +101,17 @@ impl Formatter
 		let cleaned_content3 = self.correct_switch_break_indentations(&cleaned_content2);
 		let cleaned_content4 = self.correct_weird_elses(&cleaned_content3);
 
+		// Trailing comma pass — runs after all existing passes, does not
+		// modify any of the logic above.
+		let cleaned_content5 = trailing_comma::format_trailing_commas(&cleaned_content4);
+		let incorrect_trailing_comma_formats = if cleaned_content5 != cleaned_content4 { 1 } else { 0 };
+
 		// if self.config.use_treesitter_to_format
 		// {
 		// 	return FormatterResult { content: self.format_using_treesitter(cleaned_content4), incorrect_curly_braces, incorrect_indentations, incorrect_quotes, incorrect_else_placements, incorrect_break_placements };
 		// }
 
-		return FormatterResult { content: cleaned_content4, incorrect_curly_braces, incorrect_indentations, incorrect_quotes, incorrect_else_placements, incorrect_break_placements };
+		return FormatterResult { content: cleaned_content5, incorrect_curly_braces, incorrect_indentations, incorrect_quotes, incorrect_else_placements, incorrect_break_placements, incorrect_trailing_comma_formats };
 	}
 
 	fn forbidden_lines(&self, content: &String) -> Vec<i32>
