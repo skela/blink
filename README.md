@@ -9,6 +9,7 @@ We may not need or even want to do all the crazy things the dartfm does, but her
 - Fix up incorrectly placed curly braces (if editorconfig has curly_brace_on_next_line=true)
 - Fix up incorrect indentation (if editorconfig has indent_style = tab)
 - Fix up incorrect single quote usage (if editorconfig has prefer_double_quotes=true)
+- Sorts out indentation of code, cascading if trailing comma, left unchanged if no trailing comma.
 
 Sample of .editorconfig that can be used:
 
