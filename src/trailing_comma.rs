@@ -293,6 +293,12 @@ fn format_span(fragment: &str, indent_level: usize) -> String
 		return render_multi_line(open_char, &non_empty, close_char, indent_level, trailing);
 	}
 
+	// No trailing comma and already single-line — leave completely untouched.
+	if !fragment.contains('\n')
+	{
+		return fragment.to_string();
+	}
+
 	let single = render_single_line(open_char, &non_empty, close_char);
 
 	// If the single-line form already contains newlines it means one of the
@@ -306,7 +312,7 @@ fn format_span(fragment: &str, indent_level: usize) -> String
 		return fragment.to_string();
 	}
 
-	// No trailing comma → always single line, regardless of length.
+	// No trailing comma, was multi-line → collapse to single line.
 	single
 }
 
@@ -540,7 +546,7 @@ fn has_inline_comments(inner: &str) -> bool
 fn render_single_line(open: char, elements: &[String], close: char) -> String
 {
 	let parts: Vec<&str> = elements.iter().map(|e| e.trim()).collect();
-	format!("{}{}{}", open, parts.join(","), close)
+	format!("{}{}{}", open, parts.join(", "), close)
 }
 
 fn render_multi_line(open: char, elements: &[String], close: char, indent_level: usize, has_trailing: bool) -> String
