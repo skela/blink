@@ -286,34 +286,16 @@ fn format_span(fragment: &str, indent_level: usize) -> String
 	}
 
 	let trailing = has_trailing_comma(inner);
+
+	// Only reformat spans that already have a trailing comma.
+	// If there is no trailing comma, leave the fragment completely untouched.
+	if !trailing
+	{
+		return fragment.to_string();
+	}
+
 	let inline_comments = has_inline_comments(inner);
-
-	if trailing || inline_comments
-	{
-		return render_multi_line(open_char, &non_empty, close_char, indent_level, trailing);
-	}
-
-	// No trailing comma and already single-line — leave completely untouched.
-	if !fragment.contains('\n')
-	{
-		return fragment.to_string();
-	}
-
-	let single = render_single_line(open_char, &non_empty, close_char);
-
-	// If the single-line form already contains newlines it means one of the
-	// inner elements was expanded to multi-line by an earlier pass (e.g. a
-	// named-parameter block { ... } that was just formatted). In that case,
-	// leave the outer delimiter pair as-is — the natural wrapping produced by
-	// the inner pass is already correct and adding another layer of indentation
-	// would be wrong.
-	if single.contains('\n')
-	{
-		return fragment.to_string();
-	}
-
-	// No trailing comma, was multi-line → collapse to single line.
-	single
+	render_multi_line(open_char, &non_empty, close_char, indent_level, trailing || inline_comments)
 }
 
 // ---------------------------------------------------------------------------
