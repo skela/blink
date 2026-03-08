@@ -177,6 +177,31 @@ impl Formatter
 			line_number += 1;
 		}
 
+		let mut is_inside_block_comment = false;
+		line_number = 0;
+
+		for line in content.lines()
+		{
+			if is_inside_block_comment
+			{
+				forbidden.push(line_number);
+				if line.contains("*/")
+				{
+					is_inside_block_comment = false;
+				}
+			}
+			else if line.trim().contains("/*")
+			{
+				forbidden.push(line_number);
+				let after_open = &line[line.find("/*").unwrap() + 2..];
+				if !after_open.contains("*/")
+				{
+					is_inside_block_comment = true;
+				}
+			}
+			line_number += 1;
+		}
+
 		return forbidden;
 	}
 

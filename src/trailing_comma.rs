@@ -113,6 +113,7 @@ fn find_spans(content: &str) -> Vec<Span>
 	let mut in_multi_string = false;
 	let mut multi_quote: u8 = b'"';
 	let mut in_line_comment = false;
+	let mut in_block_comment = false;
 
 	while i < n
 	{
@@ -125,6 +126,23 @@ fn find_spans(content: &str) -> Vec<Span>
 			{
 				in_line_comment = false;
 				line_start = i + 1;
+			}
+			i += 1;
+			continue;
+		}
+
+		// --- inside a block comment ---
+		if in_block_comment
+		{
+			if c == b'\n'
+			{
+				line_start = i + 1;
+			}
+			else if c == b'*' && i + 1 < n && bytes[i + 1] == b'/'
+			{
+				in_block_comment = false;
+				i += 2;
+				continue;
 			}
 			i += 1;
 			continue;
@@ -179,6 +197,14 @@ fn find_spans(content: &str) -> Vec<Span>
 			multi_quote = c;
 			last_sig = c;
 			i += 3;
+			continue;
+		}
+
+		// Check for block comment /*
+		if c == b'/' && i + 1 < n && bytes[i + 1] == b'*'
+		{
+			in_block_comment = true;
+			i += 2;
 			continue;
 		}
 
@@ -542,7 +568,8 @@ fn render_multi_line(open: char, elements: &[String], close: char, indent_level:
 	{
 		let is_last = idx == elements.len() - 1;
 		let trimmed = element.trim();
-		if is_last && !has_trailing
+		let is_comment = trimmed.starts_with("//");
+		if is_comment || (is_last && !has_trailing)
 		{
 			out.push_str(&format!("{}{}\n", child_indent, trimmed));
 		}
@@ -572,3 +599,81 @@ fn tabs_at_line_start(bytes: &[u8], line_start: usize) -> usize
 	count
 }
 
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
+
+#[cfg(test)]
+mod tests
+{
+	use super::*;
+
+	// -- // single-line comments --
+
+	#[test]
+	fn line_comment_with_trailing_comma_not_expanded()
+	{
+		// A trailing comma inside a // comment must never trigger expansion.
+		let input = "// myFunction(arg1, arg2,)\n";
+		assert_eq!(format_trailing_commas(input), input);
+	}
+
+	#[test]
+	fn line_comment_mixed_with_real_code()
+	{
+		// The comment line is untouched; the real call below it is expanded.
+		let input = "// ignored(a, b,)\nmyFunction(a, b,);\n";
+		let expected = "// ignored(a, b,)\nmyFunction(\n\ta,\n\tb,\n);\n";
+		assert_eq!(format_trailing_commas(input), expected);
+	}
+
+	// -- /// doc comments --
+
+	#[test]
+	fn doc_comment_with_trailing_comma_not_expanded()
+	{
+		let input = "/// myFunction(arg1, arg2,)\n";
+		assert_eq!(format_trailing_commas(input), input);
+	}
+
+	// -- /* */ block comments --
+
+	#[test]
+	fn block_comment_single_line_not_expanded()
+	{
+		// Inline block comment on one line — must not be touched.
+		let input = "/* myFunction(arg1, arg2,) */\n";
+		assert_eq!(format_trailing_commas(input), input);
+	}
+
+	#[test]
+	fn block_comment_multi_line_not_expanded()
+	{
+		// A multi-line block comment containing a trailing-comma call.
+		let input = "/*\nmyFunction(\n\targ1,\n\targ2,\n)\n*/\n";
+		assert_eq!(format_trailing_commas(input), input);
+	}
+
+	#[test]
+	fn block_comment_mixed_with_real_code()
+	{
+		// Content inside /* */ is untouched; code outside is still formatted.
+		let input = "/* ignored(a, b,) */\nmyFunction(a, b,);\n";
+		let expected = "/* ignored(a, b,) */\nmyFunction(\n\ta,\n\tb,\n);\n";
+		assert_eq!(format_trailing_commas(input), expected);
+	}
+
+	#[test]
+	fn inline_comment_element_does_not_accumulate_commas()
+	{
+		// A commented-out line inside a trailing-comma span must never have
+		// extra commas appended to it across formatter passes.
+		let input = "myFunction(\n\targ1,\n\t// disabled: value,\n\targ2,\n);\n";
+		let result = format_trailing_commas(input);
+		assert!(
+			!result.contains(",,"),
+			"comment line should not accumulate commas, got:\n{}",
+			result
+		);
+	}
+}
