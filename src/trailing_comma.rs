@@ -606,9 +606,33 @@ fn render_multi_line(open: char, elements: &[String], close: char, indent_level:
 		{
 			// If the element has a trailing inline comment, the comma must come
 			// before the comment (e.g. `value, // note` not `value // note,`).
-			// Only safe for single-line elements: multi-line elements may contain
-			// `//` buried inside nested code, which would cause strip_line_comment
-			// to truncate everything after the first internal comment.
+
+			// For multi-line elements, check if only the last line has an inline comment
+			let lines: Vec<&str> = trimmed.lines().collect();
+			if lines.len() > 1
+			{
+				if let Some(last_line) = lines.last()
+				{
+					let last_stripped = strip_line_comment(last_line).trim_end();
+					if last_stripped.len() < last_line.trim_end().len()
+					{
+						// Last line has an inline comment — split it and add comma before comment
+						let comment_part = last_line[last_stripped.len()..].trim_start();
+						// Output first line with child_indent
+						out.push_str(&format!("{}{}\n", child_indent, lines[0]));
+						// Output middle lines as-is (they already have proper indentation)
+						for line in &lines[1..lines.len() - 1]
+						{
+							out.push_str(&format!("{}\n", line));
+						}
+						// Output the last line with comma before comment
+						out.push_str(&format!("{}, {}\n", last_stripped, comment_part));
+						continue;
+					}
+				}
+			}
+
+			// Single-line element or multi-line without inline comment on last line
 			let value_part = if !trimmed.contains('\n')
 			{
 				strip_line_comment(trimmed).trim_end()
@@ -809,5 +833,34 @@ mod tests
 			"comment line should not accumulate commas, got:\n{}",
 			result
 		);
+	}
+
+	#[test]
+	fn multiline_element_with_trailing_comma_and_inline_comment()
+	{
+		// A multi-line element (e.g., if-statement) with a trailing comma
+		// followed by an inline comment must preserve the comma before the
+		// comment, not after it. The formatter must not accumulate commas
+		// across multiple passes.
+		let input = concat!(
+			"var list = [\n",
+			"\titem1,\n",
+			"\tif (condition)\n",
+			"\t\tcell(\"Is this working?\", model.isThisWorking), // TODO: Localise this\n",
+			"\titem2,\n",
+			"];\n",
+		);
+		let result = format_trailing_commas(input);
+
+		// The comma must be before the comment, not after
+		assert!(result.contains("), // TODO:"), "comma should be before comment");
+
+		// Must not have multiple commas
+		assert!(!result.contains(",,"), "should not have double commas");
+		assert!(!result.contains(",,,"), "should not accumulate commas");
+
+		// Verify stability: running again should produce the same output
+		let result2 = format_trailing_commas(&result);
+		assert_eq!(result, result2, "formatter output should be stable");
 	}
 }
