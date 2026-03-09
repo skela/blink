@@ -354,6 +354,14 @@ fn split_elements(inner: &str) -> Vec<String>
 			if c == '\n'
 			{
 				in_comment = false;
+				// A line comment consumes everything up to and including its newline.
+				// Split here at depth==0 so the next line's content starts a fresh
+				// element instead of being merged into the comment element.
+				if depth == 0
+				{
+					elements.push(current.clone());
+					current = String::new();
+				}
 			}
 			i += 1;
 			continue;
@@ -442,9 +450,30 @@ fn split_elements(inner: &str) -> Vec<String>
 		// Top-level comma = element separator
 		if c == ',' && depth == 0
 		{
+			// Peek ahead: if the remainder of this line is only whitespace + a
+			// line comment, consume it into the current element so the comment
+			// stays on the same line as the value it annotates.
+			let mut j = i + 1;
+			while j < n && (chars[j] == ' ' || chars[j] == '\t')
+			{
+				j += 1;
+			}
+			if j + 1 < n && chars[j] == '/' && chars[j + 1] == '/'
+			{
+				i += 1; // skip the comma itself
+				while i < n && chars[i] != '\n'
+				{
+					current.push(chars[i]);
+					i += 1;
+				}
+				// i is now at '\n' (or end); the newline is handled next iteration
+			}
+			else
+			{
+				i += 1; // skip the comma
+			}
 			elements.push(current.clone());
 			current = String::new();
-			i += 1;
 			continue;
 		}
 
@@ -575,7 +604,28 @@ fn render_multi_line(open: char, elements: &[String], close: char, indent_level:
 		}
 		else
 		{
-			out.push_str(&format!("{}{},\n", child_indent, trimmed));
+			// If the element has a trailing inline comment, the comma must come
+			// before the comment (e.g. `value, // note` not `value // note,`).
+			// Only safe for single-line elements: multi-line elements may contain
+			// `//` buried inside nested code, which would cause strip_line_comment
+			// to truncate everything after the first internal comment.
+			let value_part = if !trimmed.contains('\n')
+			{
+				strip_line_comment(trimmed).trim_end()
+			}
+			else
+			{
+				trimmed
+			};
+			if value_part.len() < trimmed.len()
+			{
+				let comment_part = trimmed[value_part.len()..].trim_start();
+				out.push_str(&format!("{}{}, {}\n", child_indent, value_part, comment_part));
+			}
+			else
+			{
+				out.push_str(&format!("{}{},\n", child_indent, trimmed));
+			}
 		}
 	}
 
@@ -661,6 +711,90 @@ mod tests
 		let input = "/* ignored(a, b,) */\nmyFunction(a, b,);\n";
 		let expected = "/* ignored(a, b,) */\nmyFunction(\n\ta,\n\tb,\n);\n";
 		assert_eq!(format_trailing_commas(input), expected);
+	}
+
+	#[test]
+	fn commented_out_param_does_not_absorb_following_elements()
+	{
+		// A commented-out line whose text contains a comma must not cause the
+		// following real parameters to lose their commas (Issue 1).
+		let input = "Widget(\n\tstyle: style,\n\t// titleColor: key.linked ? null,\n\ttitle: key.title,\n\tshowIcon: false,\n);\n";
+		let result = format_trailing_commas(input);
+		assert!(result.contains("style: style,"), "style should keep its comma");
+		assert!(result.contains("title: key.title,"), "title should keep its comma");
+		assert!(result.contains("showIcon: false,"), "showIcon should keep its comma");
+		assert!(!result.contains(",,"), "no double commas");
+	}
+
+	#[test]
+	fn inline_trailing_comment_stays_on_same_line_as_value()
+	{
+		// Inline comments that appear after the comma on the same line as a
+		// value must stay attached to that value, not be moved to the next line
+		// (Issue 2).
+		let input = "var list = [\n\tconst Color(0xFF0000), // Red\n\tconst Color(0x00FF00), // Green\n\tconst Color(0x0000FF), // Blue\n];\n";
+		let result = format_trailing_commas(input);
+		assert!(result.contains(", // Red"), "Red comment should be inline after comma");
+		assert!(result.contains(", // Green"), "Green comment should be inline after comma");
+		assert!(result.contains(", // Blue"), "Blue comment should be inline after comma");
+	}
+
+	#[test]
+	fn multi_line_element_with_internal_comment_keeps_its_comma()
+	{
+		// A list element that spans multiple lines and contains a `//` comment
+		// somewhere inside its body must still receive its trailing comma.
+		// Previously, strip_line_comment was applied to the whole multi-line
+		// element, found the first internal `//`, and silently truncated
+		// everything after it — causing the comma and all later siblings to
+		// disappear.
+		let input = concat!(
+			"children: [\n",
+			"\ttop,\n",
+			"\tContainer(\n",
+			"\t\tchild: PageView(\n",
+			"\t\t\t// key: Key(\"page\"),\n",
+			"\t\t\titemCount: count,\n",
+			"\t\t),\n",
+			"\t),\n",
+			"\tdots,\n",
+			"];\n",
+		);
+		let result = format_trailing_commas(input);
+		// The Container element must keep its comma.
+		assert!(result.contains("),"), "Container closing should keep its comma");
+		// The sibling after the multi-line element must also keep its comma.
+		assert!(result.contains("dots,"), "dots should keep its comma");
+		assert!(!result.contains(",,"), "no double commas");
+	}
+
+	#[test]
+	fn deeply_nested_structure_with_commented_out_param_preserves_all_commas()
+	{
+		// Mirrors the real-world case: a deeply nested widget tree where one
+		// span contains a commented-out named parameter.  Every element at
+		// every nesting level must retain its trailing comma.
+		let input = concat!(
+			"Widget(\n",
+			"\tbuilder: (ctx) {\n",
+			"\t\treturn Column(\n",
+			"\t\t\tchildren: [\n",
+			"\t\t\t\ttop,\n",
+			"\t\t\t\tPageView(\n",
+			"\t\t\t\t\t// key: Key(\"pv\"),\n",
+			"\t\t\t\t\titemCount: n,\n",
+			"\t\t\t\t\tonChanged: onChanged,\n",
+			"\t\t\t\t),\n",
+			"\t\t\t\tdots,\n",
+			"\t\t\t],\n",
+			"\t\t);\n",
+			"\t},\n",
+			");\n",
+		);
+		let result = format_trailing_commas(input);
+		assert!(result.contains("onChanged: onChanged,"), "onChanged should keep its comma");
+		assert!(result.contains("dots,"), "dots should keep its comma");
+		assert!(!result.contains(",,"), "no double commas");
 	}
 
 	#[test]
